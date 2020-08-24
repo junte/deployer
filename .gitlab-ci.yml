@@ -1,0 +1,44 @@
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_CACHE_IMAGE: $CI_REGISTRY_IMAGE:latest
+  DOCKER_IMAGE: $CI_REGISTRY_IMAGE:$CI_PIPELINE_IID
+  GIT_DEPTH: 1
+
+stages:
+  - pre_build
+  - build
+  - pre_release
+  - release
+
+lint_dockerfile:
+  image: hadolint/hadolint:v1.18.0-6-ga0d655d-debian
+  stage: pre_build
+  script:
+    - hadolint Dockerfile
+
+build:
+  stage: build
+  image: docker:19
+  services:
+    - docker:dind
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+    - docker pull $DOCKER_CACHE_IMAGE || true
+    - docker build --cache-from $DOCKER_CACHE_IMAGE -t $DOCKER_IMAGE -t $DOCKER_CACHE_IMAGE .
+    - docker push $DOCKER_IMAGE
+    - docker push $DOCKER_CACHE_IMAGE
+    - echo "APP_VERSION=$(cat VERSION)" >> app.env 
+  artifacts:
+    reports:
+      dotenv: app.env
+
+release_binary:
+  image: $DOCKER_IMAGE
+  stage: release
+  script:
+    - echo "copying binary..."
+    - cp /go/src/deployer .
+  artifacts:
+    name: "deployer-v$APP_VERSION"
+    paths:
+      - deployer
