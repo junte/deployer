@@ -15,11 +15,17 @@ import (
 type config struct {
 	Port       string
 	Components map[string]componentConfig
+	TLS        tlsConfig
 }
 
 type componentConfig struct {
 	Command string
 	Key     string
+}
+
+type tlsConfig struct {
+	Cert string
+	Key  string
 }
 
 // Version of application
@@ -33,12 +39,22 @@ func main() {
 
 	http.HandleFunc("/", handler)
 
-	log.Printf("Starting server on port %s", appConfig.Port)
-
-	err := http.ListenAndServeTLS(appConfig.Port, "./tls/cert.crt", "./tls/cert.key", nil)
+	err := startServer()
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
+}
+
+func startServer() (err error) {
+	if appConfig.TLS.Cert != "" && appConfig.TLS.Key != "" {
+		log.Printf("Starting https server on port %s", appConfig.Port)
+		err = http.ListenAndServeTLS(appConfig.Port, appConfig.TLS.Cert, appConfig.TLS.Key, nil)
+	} else {
+		log.Printf("Starting http server on port %s", appConfig.Port)
+		err = http.ListenAndServe(appConfig.Port, nil)
+	}
+
+	return
 }
 
 func readConfig() {
