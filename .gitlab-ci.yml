@@ -36,6 +36,7 @@ build:
 release:bin:
   image: alpine:3
   stage: release
+    - echo "release v${APP_VERSION}"
   artifacts:
     name: "deployer-v$APP_VERSION"
     paths:
