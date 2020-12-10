@@ -17,6 +17,7 @@ docker:lint:
 
 build:
   stage: build
+  image: docker:19
   services:
     - docker:19-dind
   script:
