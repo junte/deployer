@@ -1,0 +1,8 @@
+port: ":7778"
+tls:
+  cert: ./tls/cert.crt
+  key: ./tls/cert.key
+components:
+  app:
+    command: "/opt/services/app/deploy.sh --tag=${arg_tag}"
+    key: "242134321432143214213"

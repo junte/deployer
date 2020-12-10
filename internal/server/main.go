@@ -8,22 +8,22 @@ import (
 )
 
 func Run() {
-	log.Printf("Version %s", core.Version)
+	log.Printf("version: %s", core.Version)
 
 	http.HandleFunc("/", handler)
 
 	err := startServer()
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
+		log.Fatal("failed start server: ", err)
 	}
 }
 
 func startServer() (err error) {
 	if core.Config.TLS.Cert != "" && core.Config.TLS.Key != "" {
-		log.Printf("Starting https server on port %s", core.Config.Port)
+		log.Printf("starting https server on port %s", core.Config.Port)
 		err = http.ListenAndServeTLS(core.Config.Port, core.Config.TLS.Cert, core.Config.TLS.Key, nil)
 	} else {
-		log.Printf("Starting http server on port %s", core.Config.Port)
+		log.Printf("starting http server on port %s", core.Config.Port)
 		err = http.ListenAndServe(core.Config.Port, nil)
 	}
 
