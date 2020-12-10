@@ -26,6 +26,7 @@ build:
     - docker build --cache-from $DOCKER_CACHE_IMAGE -t $DOCKER_IMAGE -t $DOCKER_CACHE_IMAGE .
     - docker push $DOCKER_IMAGE
     - docker push $DOCKER_CACHE_IMAGE
+    - docker run $DOCKER_IMAGE -v ./bin:/mnt/bin cp bin/deployer /mnt/bin
     - echo "APP_VERSION=$(cat VERSION)" >> app.env
   artifacts:
     reports:
