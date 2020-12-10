@@ -36,7 +36,6 @@ release_binary:
   image: $DOCKER_IMAGE
   stage: release
   script:
-    - echo "copying binary..."
     - cp /go/src/deployer .
   artifacts:
     name: "deployer-v$APP_VERSION"

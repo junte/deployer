@@ -1,2 +1,2 @@
-build_linux:
-	CGO_ENABLED=0 GOOS=linux go build -i -a -installsuffix cgo
+build:
+	@go build -o bin/deployer deployer/cmd/server
