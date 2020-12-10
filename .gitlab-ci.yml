@@ -36,8 +36,6 @@ build:
 release:bin:
   image: alpine:3
   stage: release
-  script:
-    - cp /go/src/bin/deployer .
   artifacts:
     name: "deployer-v$APP_VERSION"
     paths:
