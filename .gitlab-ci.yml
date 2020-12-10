@@ -7,10 +7,9 @@ variables:
 stages:
   - pre_build
   - build
-  - pre_release
   - release
 
-lint_dockerfile:
+docker:lint:
   image: hadolint/hadolint:v1.18.0-6-ga0d655d-debian
   stage: pre_build
   script:
@@ -18,26 +17,27 @@ lint_dockerfile:
 
 build:
   stage: build
-  image: docker:19
   services:
-    - docker:dind
+    - docker:19-dind
   script:
     - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
     - docker pull $DOCKER_CACHE_IMAGE || true
     - docker build --cache-from $DOCKER_CACHE_IMAGE -t $DOCKER_IMAGE -t $DOCKER_CACHE_IMAGE .
     - docker push $DOCKER_IMAGE
     - docker push $DOCKER_CACHE_IMAGE
-    - echo "APP_VERSION=$(cat VERSION)" >> app.env 
+    - echo "APP_VERSION=$(cat VERSION)" >> app.env
   artifacts:
     reports:
       dotenv: app.env
+    paths:
+      - bin/deployer
 
-release_binary:
-  image: $DOCKER_IMAGE
+release:bin:
+  image: alpine:3
   stage: release
   script:
-    - cp /go/src/deployer .
+    - cp /go/src/bin/deployer .
   artifacts:
     name: "deployer-v$APP_VERSION"
     paths:
-      - deployer
+      - bin/deployer
