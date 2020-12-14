@@ -36,9 +36,12 @@ build:
 release:bin:
   image: alpine:3
   stage: release
+  only:
+    - master
   script:
     - echo "release v${APP_VERSION}"
+    - cp bin/deployer deployer
   artifacts:
     name: "deployer-v$APP_VERSION"
     paths:
-      - bin/deployer
+      - deployer
