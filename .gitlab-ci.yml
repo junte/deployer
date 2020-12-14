@@ -1,7 +1,7 @@
 variables:
   DOCKER_DRIVER: overlay2
-  DOCKER_CACHE_IMAGE: $CI_REGISTRY_IMAGE:latest
-  DOCKER_IMAGE: $CI_REGISTRY_IMAGE:$CI_PIPELINE_IID
+  DOCKER_CACHE_IMAGE: $CI_REGISTRY_IMAGE/tmp:latest
+  DOCKER_IMAGE: $CI_REGISTRY_IMAGE/tmp:${CI_PIPELINE_ID}
   GIT_DEPTH: 1
 
 stages:
@@ -9,11 +9,17 @@ stages:
   - build
   - release
 
-docker:lint:
-  image: hadolint/hadolint:v1.18.0-6-ga0d655d-debian
+lint:docker:
+  image: hadolint/hadolint:v1.19.0-44-gf364c91-debian
   stage: pre_build
   script:
     - hadolint Dockerfile
+
+lint:golang:
+  image: golangci/golangci-lint:v1.33
+  stage: pre_build
+  script:
+    - golangci-lint run
 
 build:
   stage: build

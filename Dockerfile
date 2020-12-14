@@ -1,4 +1,4 @@
-FROM golang:1.15.0 
+FROM golang:1.15
 
 ENV CGO_ENABLED=0
 
@@ -9,4 +9,8 @@ RUN go mod download
 COPY . .
 
 RUN VERSION=$(cat VERSION) \
-    && GOOS=linux GO111MODULE=on go build -i -a -installsuffix cgo -ldflags="-X 'core.Version=v${VERSION}'" -o bin/deployer deployer/cmd/server
+    && GOOS=linux GO111MODULE=on \
+        go build -i -a -installsuffix cgo
+        -ldflags="-X 'core.Version=v${VERSION}'" \
+        -o bin/deployer \
+        deployer/cmd/server
