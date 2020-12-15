@@ -7,6 +7,7 @@ variables:
 stages:
   - pre_build
   - build
+  - test
   - release
 
 lint:docker:
@@ -31,6 +32,7 @@ build:
     - docker pull $DOCKER_CACHE_IMAGE || true
     - docker build --cache-from $DOCKER_CACHE_IMAGE -t $DOCKER_IMAGE -t $DOCKER_CACHE_IMAGE .
     - docker push $DOCKER_CACHE_IMAGE
+    - docker push $DOCKER_IMAGE
     - docker run -v $(pwd)/bin:/mnt/bin $DOCKER_IMAGE cp bin/deployer /mnt/bin
     - echo "APP_VERSION=$(cat VERSION)" >> app.env
   artifacts:
@@ -38,6 +40,13 @@ build:
       dotenv: app.env
     paths:
       - bin/deployer
+
+test:
+  stage: test
+  image: $DOCKER_IMAGE
+  script:
+    - go test -p 1  -v ./...
+
 
 release:bin:
   image: alpine:3

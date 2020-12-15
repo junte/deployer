@@ -12,7 +12,7 @@ type AppConfig struct {
 }
 
 type ComponentConfig struct {
-	Command string
+	Command []string
 	Key     string
 }
 
@@ -27,7 +27,7 @@ var Version = "development"
 // Config of application runtime
 var Config AppConfig
 
-func init() {
+func ReadConfig() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")

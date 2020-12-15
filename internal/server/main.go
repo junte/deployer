@@ -10,6 +10,8 @@ import (
 func Run() {
 	log.Printf("version: %s", core.Version)
 
+	core.ReadConfig()
+
 	http.HandleFunc("/", handler)
 
 	err := startServer()

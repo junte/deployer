@@ -13,16 +13,16 @@ Even if somebody will have access to your settings on ci/cd provider he can't ru
 
 ## Configuration
 ```yaml
-port: ":7778"  # required - listening port 
+port: ":7777"  # required - listening port 
 tls:  # optional - if provided requests handled by https 
   cert: ./tls/cert.crt
   key: ./tls/cert.key
 components: # list of components for deploy
   backend:
-    command: "/opt/services/app/deploy_backend.sh --tag=${arg_tag}" # required - deploy command
+    command: ["/opt/services/app/deploy_backend.sh", "--tag=${arg_tag}"] # required - deploy command
     key: "<...>" # optional - random key for small protection. Should be passed in request
   frontend:
-    command: "/opt/services/app/deploy_frontend.sh --tag=${arg_tag}" # required - deploy command
+    command: "/opt/services/app/deploy_frontend.sh", "--tag=${arg_tag}"] # required - deploy command
     key: "<...>" # optional - random key for small protection. Should be passed in request
 ```
 
@@ -35,5 +35,5 @@ deploy:
   stage: deploy
   dependencies: []
   script:
-    - curl -k -X POST -d "component=${DEPLOYER_COMPONENT}&key=${DEPLOYER_KEY}&tag=${CI_PIPELINE_ID}" ${DEPLOYER_HOST}
+    - curl -X POST -d "component=${DEPLOYER_COMPONENT}&key=${DEPLOYER_KEY}&tag=${CI_PIPELINE_ID}" ${DEPLOYER_HOST}
 ```
