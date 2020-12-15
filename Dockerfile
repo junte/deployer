@@ -11,6 +11,6 @@ COPY . .
 RUN VERSION=$(cat VERSION) \
     && GOOS=linux GO111MODULE=on \
         go build -i -a -installsuffix cgo \
-        -ldflags="-X 'core.Version=v${VERSION}'" \
+        -ldflags="-X 'deployer/internal/core.Version=v${VERSION}'" \
         -o bin/deployer \
         deployer/cmd/server
