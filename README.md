@@ -1,8 +1,8 @@
 # Deployer
 
 ## Overview
-One of the most important aspects of DevOps is to deploy a new application version to target servers.
-As a solution, you can put a private key to the ci/cd tool (GitLab, GitHub Actions,...), then log to the target server by ssh and run the deploy script. 
+One of the most important aspects of DevOps is to deploy a new application version from ci/cd tool (GitLab, GitHub Actions,...) to target servers.
+As a solution, you can put a private key to the ci/cd tool, then log to the target server by ssh and run the deploy script. 
 BUT! It is very dangerous: your private key can be stolen by cybercriminals on the ci/cd provider side. 
 This tool suggests another approach: the deployer background task is running on the target server and listening to the public port. 
 From the deploy stage of the ci/cd pipeline, you can post an HTTP request in the specified format to this port and the tool will execute the deploy command. 
@@ -23,9 +23,9 @@ Description=Deployer service.
 Type=simple
 Restart=always
 RestartSec=10
-WorkingDirectory=/opt/junte/services/deployer
+WorkingDirectory=/opt/services/deployer
 User=deploy
-ExecStart=/opt/junte/services/deployer/deployer
+ExecStart=/opt/services/deployer/deployer
 
 [Install]
 WantedBy=multi-user.target
