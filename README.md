@@ -39,10 +39,10 @@ tls:  # optional - if provided https server started
   key: ./tls/cert.key
 components: # list of components for deploy
   backend: # component name. Value of "component" query parameter
-    command: ["/opt/services/app/deploy_backend.sh", "--tag=${arg_tag}"] # required - deploy command
+    command: [ "/opt/services/app/deploy_backend.sh", "--tag=${arg_tag}" ] # required - deploy command
     key: "<...>" # optional - random key for additional protection. If not provided - don't check. Value of "key" query parameter 
   frontend:
-    command: "/opt/services/app/deploy_frontend.sh", "--tag=${arg_tag}"] # required - deploy command
+    command: [ "/opt/services/app/deploy_frontend.sh", "--tag=${arg_tag}" ] # required - deploy command
 ```
 
 ### Command format
