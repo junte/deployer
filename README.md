@@ -1,7 +1,7 @@
 # Deployer
 
 ## Overview
-One of the most important aspects of DevOps is to deploy a new application version from ci/cd tool (GitLab, GitHub Actions,...) to target servers.
+One of the most important aspects of DevOps is to deploy a new application version from ci/cd tool (GitLab, GitHub Actions,...) to target linux servers.
 As a solution, you can put a private key to the ci/cd tool, then log to the target server by ssh and run the deploy script. 
 BUT! It is very dangerous: your private key can be stolen by cybercriminals on the ci/cd provider side. 
 This tool suggests another approach: the deployer background task is running on the target server and listening to the public port. 
