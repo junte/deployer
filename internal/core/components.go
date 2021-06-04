@@ -78,5 +78,5 @@ func deployComponent(component *ComponentConfig, args map[string]string) {
 		log.Printf("command error:\n%v", errOutput)
 	}
 
-	notifyComponentDeployed(component, err != nil, output, errOutput, args)
+	notifyComponentDeployed(component, err != nil, output, errOutput)
 }

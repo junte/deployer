@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func notifySlack(component_config *ComponentConfig, failed bool, output, errors string, args map[string]string) {
+func notifySlack(component_config *ComponentConfig, failed bool, output, errors string) {
 	if Config.Notification.Slack.ApiToken == "" {
 		return
 	}
