@@ -34,7 +34,7 @@ func notifySlack(component_config *ComponentConfig, failed bool, output, errors 
 func buildSlackMessage(componentConfig *ComponentConfig, failed bool, output, errors string) slack.MsgOption {
 	message := ""
 	if failed {
-		message = fmt.Sprintf(":x: Fail on component \"%s\" deploy to environment \"%s\"",
+		message = fmt.Sprintf(":x: Failed component \"%s\" deployment to environment \"%s\"",
 			componentConfig.Key,
 			Config.Environment,
 		)
