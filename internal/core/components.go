@@ -1,10 +1,10 @@
 package core
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"os/exec"
 	"strings"
 )
@@ -15,8 +15,7 @@ func DeployComponent(componentName string, key string, args map[string]string) (
 		return
 	}
 
-	command := prepareCommand(component.Command, args)
-	go execCommand(command)
+	go deployComponent(&component, args)
 
 	return
 }
@@ -52,14 +51,32 @@ func prepareCommand(command []string, args map[string]string) []string {
 	return preparedCommand
 }
 
-func execCommand(command []string) {
+func deployComponent(component *ComponentConfig, args map[string]string) {
+	command := prepareCommand(component.Command, args)
+
 	log.Printf("exec command: %s", command)
 
 	cmd := exec.Command(command[0], command[1:]...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stdout
+	var outBuffer, errBuffer bytes.Buffer
+	cmd.Stdout = &outBuffer
+	cmd.Stderr = &errBuffer
 
-	if err := cmd.Run(); err != nil {
-		log.Printf("command err: %v", err)
+	err := cmd.Run()
+
+	if err != nil {
+		log.Printf("error on run command: %v", err)
 	}
+
+	output := outBuffer.String()
+	errOutput := errBuffer.String()
+
+	if output != "" {
+		log.Printf("command output:\n%v", output)
+	}
+
+	if errOutput != "" {
+		log.Printf("command error:\n%v", errOutput)
+	}
+
+	notifyComponentDeployed(component, err != nil, output, errOutput, args)
 }

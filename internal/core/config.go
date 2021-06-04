@@ -6,14 +6,34 @@ import (
 )
 
 type AppConfig struct {
-	Port       string
-	Components map[string]ComponentConfig
-	TLS        TLSConfig
+	Port         string
+	Environment  string
+	Components   map[string]ComponentConfig
+	TLS          TLSConfig
+	Notification NotificationConfig
+}
+
+type NotificationConfig struct {
+	Slack SlackConfig
+}
+
+type SlackConfig struct {
+	ApiToken string
+	Channel  string
 }
 
 type ComponentConfig struct {
-	Command []string
-	Key     string
+	Command      []string
+	Key          string
+	Notification ComponentNotificationConfig
+}
+
+type ComponentNotificationConfig struct {
+	Slack SlackComponentConfig
+}
+
+type SlackComponentConfig struct {
+	Channel string
 }
 
 type TLSConfig struct {

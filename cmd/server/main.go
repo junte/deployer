@@ -1,6 +1,8 @@
 package main
 
-import "deployer/internal/server"
+import (
+	"deployer/internal/server"
+)
 
 func main() {
 	server.Run()
