@@ -1,5 +1,5 @@
 package core
 
-func notifyComponentDeployed(config *ComponentConfig, fail bool, output, errors string) {
-	go notifySlack(config, fail, output, errors)
+func notifyComponentDeployed(component string, config *ComponentConfig, fail bool, stdout, stderr string) {
+	go notifySlack(component, config, fail, stdout, stderr)
 }

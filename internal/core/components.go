@@ -9,13 +9,13 @@ import (
 	"strings"
 )
 
-func DeployComponent(componentName string, key string, args map[string]string) (err error) {
-	component, err := getComponent(componentName, key)
+func DeployComponent(component string, key string, args map[string]string) (err error) {
+	componentConfig, err := getComponent(component, key)
 	if err != nil {
 		return
 	}
 
-	go deployComponent(&component, args)
+	go deployComponent(component, &componentConfig, args)
 
 	return
 }
@@ -51,8 +51,8 @@ func prepareCommand(command []string, args map[string]string) []string {
 	return preparedCommand
 }
 
-func deployComponent(component *ComponentConfig, args map[string]string) {
-	command := prepareCommand(component.Command, args)
+func deployComponent(component string, componentConfig *ComponentConfig, args map[string]string) {
+	command := prepareCommand(componentConfig.Command, args)
 
 	log.Printf("exec command: %s", command)
 
@@ -67,16 +67,16 @@ func deployComponent(component *ComponentConfig, args map[string]string) {
 		log.Printf("error on run command: %v", err)
 	}
 
-	output := outBuffer.String()
-	errOutput := errBuffer.String()
+	stdout := outBuffer.String()
+	strerr := errBuffer.String()
 
-	if output != "" {
-		log.Printf("command output:\n%v", output)
+	if stdout != "" {
+		log.Printf("command stdout:\n%v", stdout)
 	}
 
-	if errOutput != "" {
-		log.Printf("command error:\n%v", errOutput)
+	if strerr != "" {
+		log.Printf("command error:\n%v", strerr)
 	}
 
-	notifyComponentDeployed(component, err != nil, output, errOutput)
+	notifyComponentDeployed(component, componentConfig, err != nil, stdout, strerr)
 }

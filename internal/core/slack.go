@@ -6,7 +6,7 @@ import (
 	"log"
 )
 
-func notifySlack(component_config *ComponentConfig, failed bool, output, errors string) {
+func notifySlack(component string, component_config *ComponentConfig, failed bool, stdout, stderr string) {
 	if Config.Notification.Slack.ApiToken == "" {
 		return
 	}
@@ -17,10 +17,10 @@ func notifySlack(component_config *ComponentConfig, failed bool, output, errors 
 	}
 
 	slackMessage := buildSlackMessage(
-		component_config,
+		component,
 		failed,
-		output,
-		errors,
+		stdout,
+		stderr,
 	)
 
 	client := slack.New(Config.Notification.Slack.ApiToken, slack.OptionDebug(true))
@@ -31,32 +31,32 @@ func notifySlack(component_config *ComponentConfig, failed bool, output, errors 
 	}
 }
 
-func buildSlackMessage(componentConfig *ComponentConfig, failed bool, output, errors string) slack.MsgOption {
+func buildSlackMessage(component string, failed bool, stdout, stderr string) slack.MsgOption {
 	message := ""
 	if failed {
 		message = fmt.Sprintf(":x: Failed component \"%s\" deployment to environment \"%s\"",
-			componentConfig.Key,
+			component,
 			Config.Environment,
 		)
 	} else {
 		message = fmt.Sprintf(":white_check_mark: Component \"%s\" was deployed to environment \"%s\"",
-			componentConfig.Key,
+			component,
 			Config.Environment,
 		)
 	}
 
 	attachments := []slack.Attachment{}
 	attachments = append(attachments, slack.Attachment{
-		Title:   ":memo: Log",
+		Title:   ":memo: stdout",
 		Pretext: message,
 		Color:   "#36a64f",
-		Text:    output,
+		Text:    stdout,
 	})
-	if errors != "" {
+	if stderr != "" {
 		attachments = append(attachments, slack.Attachment{
-			Title: ":fire: Errors",
+			Title: ":fire: strerr",
 			Color: "#eb343a",
-			Text:  errors,
+			Text:  stderr,
 		})
 	}
 	return slack.MsgOptionAttachments(attachments...)
