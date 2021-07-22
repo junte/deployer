@@ -23,7 +23,7 @@ func notifySlack(component string, component_config *ComponentConfig, failed boo
 		stderr,
 	)
 
-	client := slack.New(Config.Notification.Slack.ApiToken, slack.OptionDebug(true))
+	client := slack.New(Config.Notification.Slack.ApiToken)
 	_, _, err := client.PostMessage(channel, slackMessage)
 	if err != nil {
 		log.Printf("error on slack message send: %v", err)

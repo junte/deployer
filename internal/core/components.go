@@ -3,11 +3,14 @@ package core
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"log"
 	"os/exec"
-	"strings"
+	"text/template"
 )
+
+type commandContext struct {
+	Args map[string]string
+}
 
 func DeployComponent(component string, key string, args map[string]string) (err error) {
 	componentConfig, err := getComponent(component, key)
@@ -34,25 +37,12 @@ func getComponent(componentName string, key string) (component ComponentConfig, 
 	return
 }
 
-func prepareCommand(command []string, args map[string]string) []string {
-	var commandArgs []string
-	for argKey, argValue := range args {
-		commandArgs = append(commandArgs, fmt.Sprintf("${arg_%s}", argKey))
-		commandArgs = append(commandArgs, argValue)
-	}
-
-	replacer := strings.NewReplacer(commandArgs...)
-
-	var preparedCommand []string
-	for _, commandItem := range command {
-		preparedCommand = append(preparedCommand, replacer.Replace(commandItem))
-	}
-
-	return preparedCommand
-}
-
 func deployComponent(component string, componentConfig *ComponentConfig, args map[string]string) {
-	command := prepareCommand(componentConfig.Command, args)
+	command, err := prepareCommand(componentConfig.Command, args)
+	if err != nil {
+		log.Printf("error on prepare command: %v", err)
+		return
+	}
 
 	log.Printf("exec command: %s", command)
 
@@ -61,7 +51,7 @@ func deployComponent(component string, componentConfig *ComponentConfig, args ma
 	cmd.Stdout = &outBuffer
 	cmd.Stderr = &errBuffer
 
-	err := cmd.Run()
+	err = cmd.Run()
 
 	if err != nil {
 		log.Printf("error on run command: %v", err)
@@ -79,4 +69,28 @@ func deployComponent(component string, componentConfig *ComponentConfig, args ma
 	}
 
 	notifyComponentDeployed(component, componentConfig, err != nil, stdout, strerr)
+}
+
+func prepareCommand(commandTemplate []string, args map[string]string) (command []string, err error) {
+	context := commandContext{
+		Args: args,
+	}
+
+	for _, commandItem := range commandTemplate {
+		var templateBuffer bytes.Buffer
+		var parsedTemplate *template.Template
+		parsedTemplate, err = template.New(commandItem).Parse(commandItem)
+		if err != nil {
+			return
+		}
+
+		err = parsedTemplate.Execute(&templateBuffer, context)
+		if err != nil {
+			return
+		}
+
+		command = append(command, templateBuffer.String())
+	}
+
+	return
 }
