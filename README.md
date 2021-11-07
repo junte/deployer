@@ -34,22 +34,27 @@ WantedBy=multi-user.target
 ## Configuration
 ```yaml
 port: ":7777"  # required - listening port 
-tls:  # optional - if provided https server started
+environment: "dev" # required - environment label
+tls:  # optional - if provided https server is started
   cert: ./tls/cert.crt
   key: ./tls/cert.key
+notification: # optional - notifications config
+  slack:
+    apiToken: "<...>" # slack api token
+    channel: "#deployments" # slack channel to send message
 components: # list of components for deploy
   backend: # component name. Value of "component" query parameter
-    command: [ "/opt/services/app/deploy_backend.sh", "--tag=${arg_tag}" ] # required - deploy command
+    command: [ "/opt/services/app/deploy_backend.sh", "--tag={{ .Args.tag }}" ] # required - deploy command
     key: "<...>" # optional - random key for additional protection. If not provided - don't check. Value of "key" query parameter 
   frontend:
-    command: [ "/opt/services/app/deploy_frontend.sh", "--tag=${arg_tag}" ] # required - deploy command
+    command: [ "/opt/services/app/deploy_frontend.sh", "--tag={{ .Args.tag }}" ] # required - deploy command
 ```
 
 ### Command format
 The command can be any shell script with/without parameters. 
 In a request to deployer, some additional query parameters can be provided.
-They can be injected in command in format `${arg_<query parameter>}`.
-For example, the `tag` query parameter can be used in command by adding `${arg_tag}` to the desired place.
+They can be injected in command in format `{{ .Args.<query_parameter> }}`.
+For example, the `tag` query parameter can be used in command by adding `{{ .Args.tag }}` to the desired place.
 
 
 ## Examples
