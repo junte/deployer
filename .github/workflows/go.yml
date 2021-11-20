@@ -9,17 +9,22 @@ on:
 jobs:
 
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.17
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
 
-    - name: Build
-      run: go build -v ./...
+      - name: Build
+        run: |
+          VERSION=$(cat VERSION)
+          GOOS=linux
+          GO111MODULE=on
+          CGO_ENABLED=0
+          go build -a -installsuffix cgo -ldflags="-X 'deployer/internal/core.Version=v${VERSION}'" -o bin/deployer deployer/cmd/server
 
-    - name: Test
-      run: go test -v ./...
+      - name: Test
+        run: go test -v ./...
