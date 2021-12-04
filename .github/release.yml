@@ -1,9 +1,9 @@
 changelog:
   categories:
-    - title: New features
+    - title: Added
       labels:
         - enhancement
-    - title: Fixes
+    - title: Fixed
       labels:
         - bug
         - fix
