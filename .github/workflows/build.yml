@@ -15,7 +15,7 @@ jobs:
 
       - name: Build
         id: build
-        run: go build
+        run: go build deployer/cmd/server
 
       - name: Test
         run: go test -v ./...
