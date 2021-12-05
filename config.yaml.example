@@ -4,5 +4,5 @@ tls:
   key: ./tls/cert.key
 components:
   app:
-    command: ["/opt/services/app/deploy.sh", "--tag=${arg_tag}"]
+    command: [ "/opt/services/app/deploy_backend.sh", "--tag={{ .Args.tag }}" ]
     key: "242134321432143214213"
