@@ -10,7 +10,7 @@ No private information should be stored on the ci/cd provider (only deployer add
 Even if somebody will have access to your settings on ci/cd provider he can't run custom script on the target server because you control allowed commands
 
 ## Installation
-- download binary from [releases page](https://gitlab.com/junte/devops/deployer/-/releases/)
+- download binary from [releases page](https://github.com/Junte/deployer/releases)
 - create configuration file `config.yaml` and place it at folder with executable
 - run tool `./deployer`
 
