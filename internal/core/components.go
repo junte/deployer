@@ -12,7 +12,7 @@ type commandContext struct {
 	Args map[string]string
 }
 
-func DeployComponent(component string, key string, args map[string]string) (err error) {
+func DeployComponent(component, key string, args map[string]string) (err error) {
 	componentConfig, err := getComponent(component, key)
 	if err != nil {
 		return
@@ -23,7 +23,7 @@ func DeployComponent(component string, key string, args map[string]string) (err 
 	return
 }
 
-func getComponent(componentName string, key string) (component ComponentConfig, err error) {
+func getComponent(componentName, key string) (component ComponentConfig, err error) {
 	component, ok := Config.Components[componentName]
 	if !ok {
 		err = errors.New("component not found")
@@ -37,8 +37,8 @@ func getComponent(componentName string, key string) (component ComponentConfig, 
 	return
 }
 
-func deployComponent(component string, componentConfig *ComponentConfig, args map[string]string) {
-	command, err := prepareCommand(componentConfig.Command, args)
+func deployComponent(component string, config *ComponentConfig, args map[string]string) {
+	command, err := prepareCommand(config.Command, args)
 	if err != nil {
 		log.Printf("error on prepare command: %v", err)
 		return
@@ -68,7 +68,7 @@ func deployComponent(component string, componentConfig *ComponentConfig, args ma
 		log.Printf("command error:\n%v", strerr)
 	}
 
-	notifyComponentDeployed(component, componentConfig, err != nil, stdout, strerr)
+	notifyComponentDeployed(component, config, err != nil, stdout, strerr)
 }
 
 func prepareCommand(commandTemplate []string, args map[string]string) (command []string, err error) {

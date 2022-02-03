@@ -36,10 +36,8 @@ func TestPrepareCommand(t *testing.T) {
 			command, err := prepareCommand(testCase.command, testCase.args)
 			if err != nil {
 				t.Errorf("err: %s", err)
-			} else {
-				if !reflect.DeepEqual(command, testCase.want) {
-					t.Errorf("got %s, want %s", command, testCase.want)
-				}
+			} else if !reflect.DeepEqual(command, testCase.want) {
+				t.Errorf("got %s, want %s", command, testCase.want)
 			}
 		})
 	}
