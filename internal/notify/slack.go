@@ -1,14 +1,14 @@
 package notify
 
 import (
-	"deployer/internal/core"
+	"deployer/internal/config"
 	"fmt"
 	"github.com/slack-go/slack"
 	"log"
 )
 
-func notifySlack(component string, componentConfig *core.ComponentConfig, failed bool, stdout, stderr string) {
-	if core.Config.Notification.Slack.ApiToken == "" {
+func notifySlack(component string, componentConfig *config.ComponentConfig, failed bool, stdout, stderr string) {
+	if config.Config.Notification.Slack.ApiToken == "" {
 		return
 	}
 
@@ -26,7 +26,7 @@ func notifySlack(component string, componentConfig *core.ComponentConfig, failed
 
 	slackMessage := buildSlackMessage(text, stdout, stderr)
 
-	client := slack.New(core.Config.Notification.Slack.ApiToken)
+	client := slack.New(config.Config.Notification.Slack.ApiToken)
 	_, _, err := client.PostMessage(channel, slackMessage)
 	if err != nil {
 		log.Printf("error on slack message send: %v", err)
@@ -55,19 +55,19 @@ func buildSlackMessage(message string, stdout, stderr string) slack.MsgOption {
 func buildFailMessage(component string) string {
 	return fmt.Sprintf(":x: Failed component \"%s\" deployment to environment \"%s\"",
 		component,
-		core.Config.Environment,
+		config.Config.Environment,
 	)
 }
 
 func buildSuccessMessage(component string) string {
 	return fmt.Sprintf(":white_check_mark: Component \"%s\" was deployed to environment \"%s\"",
 		component,
-		core.Config.Environment,
+		config.Config.Environment,
 	)
 }
 
-func getSlackChannel(componentConfig *core.ComponentConfig) string {
-	channel := core.Config.Notification.Slack.Channel
+func getSlackChannel(componentConfig *config.ComponentConfig) string {
+	channel := config.Config.Notification.Slack.Channel
 	if componentConfig.Notification.Slack.Channel != "" {
 		channel = componentConfig.Notification.Slack.Channel
 	}

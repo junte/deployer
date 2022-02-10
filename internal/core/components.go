@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"deployer/internal/config"
 	"deployer/internal/notify"
 	"errors"
 	"log"
@@ -24,8 +25,8 @@ func DeployComponent(component, key string, args map[string]string) (err error) 
 	return
 }
 
-func getComponent(componentName, key string) (component ComponentConfig, err error) {
-	component, ok := Config.Components[componentName]
+func getComponent(componentName, key string) (component config.ComponentConfig, err error) {
+	component, ok := config.Config.Components[componentName]
 	if !ok {
 		err = errors.New("component not found")
 		return
@@ -38,7 +39,7 @@ func getComponent(componentName, key string) (component ComponentConfig, err err
 	return
 }
 
-func internalDeployComponent(component string, config *ComponentConfig, args map[string]string) {
+func internalDeployComponent(component string, config *config.ComponentConfig, args map[string]string) {
 	command, err := prepareCommand(config.Command, args)
 	if err != nil {
 		log.Printf("error on prepare command: %v", err)

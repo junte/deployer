@@ -1,6 +1,7 @@
 package server
 
 import (
+	"deployer/internal/config"
 	"deployer/internal/core"
 	"fmt"
 	"log"
@@ -8,49 +9,49 @@ import (
 )
 
 func Run() {
-	log.Printf("version: %s", core.Version)
+	log.Printf("version: %s", config.Version)
 
-	core.ReadConfig()
+	config.ReadConfig()
 
 	http.HandleFunc("/", handler)
 
 	err := startServer()
 	if err != nil {
-		log.Fatal("failed start server: ", err)
+		log.Printf("failed start server: %s", err)
 	}
 }
 
 func startServer() (err error) {
-	if core.Config.TLS.Cert != "" && core.Config.TLS.Key != "" {
-		log.Printf("starting https server on port %s", core.Config.Port)
-		err = http.ListenAndServeTLS(core.Config.Port, core.Config.TLS.Cert, core.Config.TLS.Key, nil)
+	if config.Config.TLS.Cert != "" && config.Config.TLS.Key != "" {
+		log.Printf("starting https server on port %s", config.Config.Port)
+		err = http.ListenAndServeTLS(config.Config.Port, config.Config.TLS.Cert, config.Config.TLS.Key, nil)
 	} else {
-		log.Printf("starting http server on port %s", core.Config.Port)
-		err = http.ListenAndServe(core.Config.Port, nil)
+		log.Printf("starting http server on port %s", config.Config.Port)
+		err = http.ListenAndServe(config.Config.Port, nil)
 	}
 
 	return
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "", http.StatusMethodNotAllowed)
+func handler(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != "POST" {
+		http.Error(writer, "", http.StatusMethodNotAllowed)
 		return
 	}
 
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, fmt.Sprintf("wrong query params err: %v", err), http.StatusBadRequest)
+	if err := request.ParseForm(); err != nil {
+		http.Error(writer, fmt.Sprintf("wrong query params err: %v", err), http.StatusBadRequest)
 		return
 	}
 
 	args := make(map[string]string)
-	for key, values := range r.Form {
+	for key, values := range request.Form {
 		args[key] = values[0]
 	}
 
-	err := core.DeployComponent(r.FormValue("component"), r.FormValue("key"), args)
+	err := core.DeployComponent(request.FormValue("component"), request.FormValue("key"), args)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("deploy err: %v", err), http.StatusBadRequest)
+		http.Error(writer, fmt.Sprintf("deploy err: %v", err), http.StatusBadRequest)
 		return
 	}
 }
