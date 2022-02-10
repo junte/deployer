@@ -18,7 +18,7 @@ func DeployComponent(component, key string, args map[string]string) (err error) 
 		return
 	}
 
-	go deployComponent(component, &componentConfig, args)
+	go internalDeployComponent(component, &componentConfig, args)
 
 	return
 }
@@ -37,7 +37,7 @@ func getComponent(componentName, key string) (component ComponentConfig, err err
 	return
 }
 
-func deployComponent(component string, config *ComponentConfig, args map[string]string) {
+func internalDeployComponent(component string, config *ComponentConfig, args map[string]string) {
 	command, err := prepareCommand(config.Command, args)
 	if err != nil {
 		log.Printf("error on prepare command: %v", err)
