@@ -1,4 +1,5 @@
 # Deployer
+[![DeepSource](https://deepsource.io/gh/Junte/deployer.svg/?label=active+issues&show_trend=true&token=jzluf0dMTSlbqqtmaIh5VMV4)](https://deepsource.io/gh/Junte/deployer/?ref=repository-badge)
 
 ## Overview
 One of the most important aspects of DevOps is to deploy a new application version from ci/cd tool (GitLab, GitHub Actions,...) to target linux servers.
