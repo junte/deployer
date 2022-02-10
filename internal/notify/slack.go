@@ -34,7 +34,7 @@ func notifySlack(component string, componentConfig *config.ComponentConfig, fail
 	}
 }
 
-func buildSlackMessage(message string, stdout, stderr string) slack.MsgOption {
+func buildSlackMessage(message, stdout, stderr string) slack.MsgOption {
 	attachments := []slack.Attachment{}
 	attachments = append(attachments, slack.Attachment{
 		Title:   ":memo: stdout",
