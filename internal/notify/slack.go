@@ -17,14 +17,7 @@ func notifySlack(component string, componentConfig *config.ComponentConfig, fail
 		return
 	}
 
-	text := ""
-	if failed {
-		text = buildFailMessage(component)
-	} else {
-		text = buildSuccessMessage(component)
-	}
-
-	slackMessage := buildSlackMessage(text, stdout, stderr)
+	slackMessage := buildSlackMessage(component, failed, stdout, stderr)
 
 	client := slack.New(config.Config.Notification.Slack.ApiToken)
 	_, _, err := client.PostMessage(channel, slackMessage)
@@ -34,7 +27,20 @@ func notifySlack(component string, componentConfig *config.ComponentConfig, fail
 	}
 }
 
-func buildSlackMessage(message, stdout, stderr string) slack.MsgOption {
+func buildSlackMessage(component string, failed bool, stdout, stderr string) slack.MsgOption {
+	message := ""
+	if failed {
+		message = fmt.Sprintf(":x: Failed component \"%s\" deployment to environment \"%s\"",
+			component,
+			config.Config.Environment,
+		)
+	} else {
+		message = fmt.Sprintf(":white_check_mark: Component \"%s\" was deployed to environment \"%s\"",
+			component,
+			config.Config.Environment,
+		)
+	}
+
 	attachments := []slack.Attachment{}
 	attachments = append(attachments, slack.Attachment{
 		Title:   ":memo: stdout",
@@ -50,20 +56,6 @@ func buildSlackMessage(message, stdout, stderr string) slack.MsgOption {
 		})
 	}
 	return slack.MsgOptionAttachments(attachments...)
-}
-
-func buildFailMessage(component string) string {
-	return fmt.Sprintf(":x: Failed component \"%s\" deployment to environment \"%s\"",
-		component,
-		config.Config.Environment,
-	)
-}
-
-func buildSuccessMessage(component string) string {
-	return fmt.Sprintf(":white_check_mark: Component \"%s\" was deployed to environment \"%s\"",
-		component,
-		config.Config.Environment,
-	)
 }
 
 func getSlackChannel(componentConfig *config.ComponentConfig) string {
