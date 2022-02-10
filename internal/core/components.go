@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"deployer/internal/notify"
 	"errors"
 	"log"
 	"os/exec"
@@ -68,7 +69,7 @@ func internalDeployComponent(component string, config *ComponentConfig, args map
 		log.Printf("command error:\n%v", strerr)
 	}
 
-	notifyComponentDeployed(component, config, err != nil, stdout, strerr)
+	notify.NotifyComponentDeployed(component, config, err != nil, stdout, strerr)
 }
 
 func prepareCommand(commandTemplate []string, args map[string]string) (command []string, err error) {
