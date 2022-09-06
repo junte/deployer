@@ -50,7 +50,7 @@ func buildSlackMessage(component string, failed bool, stdout, stderr string) sla
 
 	if stderr != "" {
 		attachments = append(attachments, slack.Attachment{
-			Title: ":fire: strerr",
+			Title: ":fire: stderr",
 			Color: "#eb343a",
 			Text:  stderr,
 		})

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 func Run() {
@@ -22,12 +23,17 @@ func Run() {
 }
 
 func startServer() (err error) {
+	server := &http.Server{
+		Addr:              config.Config.Port,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+
 	if config.Config.TLS.Cert != "" && config.Config.TLS.Key != "" {
 		log.Printf("starting https server on port %s", config.Config.Port)
-		err = http.ListenAndServeTLS(config.Config.Port, config.Config.TLS.Cert, config.Config.TLS.Key, nil)
+		err = server.ListenAndServeTLS(config.Config.TLS.Cert, config.Config.TLS.Key)
 	} else {
 		log.Printf("starting http server on port %s", config.Config.Port)
-		err = http.ListenAndServe(config.Config.Port, nil)
+		err = server.ListenAndServe()
 	}
 
 	return
