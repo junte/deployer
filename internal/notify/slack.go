@@ -20,8 +20,7 @@ func notifySlack(component string, componentConfig *config.ComponentConfig, fail
 	slackMessage := buildSlackMessage(component, failed, stdout, stderr)
 
 	client := slack.New(config.Config.Notification.Slack.ApiToken)
-	_, _, err := client.PostMessage(channel, slackMessage)
-	if err != nil {
+	if _, _, err := client.PostMessage(channel, slackMessage); err != nil {
 		log.Printf("error on slack message send: %v", err)
 		return
 	}
@@ -41,13 +40,14 @@ func buildSlackMessage(component string, failed bool, stdout, stderr string) sla
 		)
 	}
 
-	attachments := []slack.Attachment{}
+	var attachments []slack.Attachment
 	attachments = append(attachments, slack.Attachment{
 		Title:   ":memo: stdout",
 		Pretext: message,
 		Color:   "#36a64f",
 		Text:    stdout,
 	})
+
 	if stderr != "" {
 		attachments = append(attachments, slack.Attachment{
 			Title: ":fire: strerr",
@@ -55,6 +55,7 @@ func buildSlackMessage(component string, failed bool, stdout, stderr string) sla
 			Text:  stderr,
 		})
 	}
+
 	return slack.MsgOptionAttachments(attachments...)
 }
 

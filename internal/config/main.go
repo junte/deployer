@@ -41,10 +41,10 @@ type TLSConfig struct {
 	Key  string
 }
 
-// Version of application
+// Version of application.
 var Version = "development"
 
-// Config of application runtime
+// Config of application runtime.
 var Config AppConfig
 
 func ReadConfig() {

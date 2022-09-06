@@ -1,0 +1,21 @@
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - unconvert
+    - wsl
+    - grouper
+    - godot
+    - gocritic
+    - whitespace
+    - usestdlibvars
+    - prealloc
+    - nilnil
+    - nilerr
+    - gochecknoinits
+    - dupl

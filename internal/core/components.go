@@ -36,6 +36,7 @@ func getComponent(componentName, key string) (component config.ComponentConfig, 
 		err = errors.New("keys mismatch")
 		return
 	}
+
 	return
 }
 
@@ -48,8 +49,9 @@ func internalDeployComponent(component string, config *config.ComponentConfig, a
 
 	log.Printf("exec command: %s", command)
 
-	cmd := exec.Command(command[0], command[1:]...)
 	var outBuffer, errBuffer bytes.Buffer
+
+	cmd := exec.Command(command[0], command[1:]...)
 	cmd.Stdout = &outBuffer
 	cmd.Stderr = &errBuffer
 
@@ -79,15 +81,15 @@ func prepareCommand(commandTemplate []string, args map[string]string) (command [
 	}
 
 	for _, commandItem := range commandTemplate {
-		var templateBuffer bytes.Buffer
 		var parsedTemplate *template.Template
-		parsedTemplate, err = template.New(commandItem).Parse(commandItem)
-		if err != nil {
+
+		if parsedTemplate, err = template.New(commandItem).Parse(commandItem); err != nil {
 			return
 		}
 
-		err = parsedTemplate.Execute(&templateBuffer, context)
-		if err != nil {
+		var templateBuffer bytes.Buffer
+
+		if err = parsedTemplate.Execute(&templateBuffer, context); err != nil {
 			return
 		}
 

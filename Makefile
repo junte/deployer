@@ -8,3 +8,6 @@ test:
 
 tag:
 	@git tag -a v${VERSION} -m "v${VERSION}"
+
+lint:
+	@golangci-lint run

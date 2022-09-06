@@ -34,7 +34,7 @@ func startServer() (err error) {
 }
 
 func handler(writer http.ResponseWriter, request *http.Request) {
-	if request.Method != "POST" {
+	if request.Method != http.MethodPost {
 		http.Error(writer, "", http.StatusMethodNotAllowed)
 		return
 	}
