@@ -22,7 +22,7 @@ func Run() {
 
 	err := startServer()
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }
 func setupLogging() {
