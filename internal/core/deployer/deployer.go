@@ -52,7 +52,7 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 	}
 
 	log.Debugf("exec command: %s", command)
-	cmd := exec.Command(command[0], command[1:]...)
+	cmd := exec.Command(command[0], command[1:]...) //nolint:gosec
 	cmdStdout, err := cmd.StdoutPipe()
 
 	if err != nil {
