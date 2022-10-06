@@ -151,7 +151,7 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 	return
 }
 
-func (_ *ComponentDeployer) handleReader(output *chan string, reader *bufio.Reader) {
+func (*ComponentDeployer) handleReader(output *chan string, reader *bufio.Reader) {
 	for {
 		str, err := reader.ReadString('\n')
 		if len(str) == 0 && err != nil {
@@ -164,7 +164,7 @@ func (_ *ComponentDeployer) handleReader(output *chan string, reader *bufio.Read
 	}
 }
 
-func (deployer *ComponentDeployer) prepareCommand(commandTemplate []string, args map[string]string) (command []string, err error) {
+func (*ComponentDeployer) prepareCommand(commandTemplate []string, args map[string]string) (command []string, err error) {
 	context := commandTemplateContext{
 		Args: args,
 	}
