@@ -30,13 +30,13 @@ func Notify(results *core.ComponentDeployResults) {
 
 func buildSlackMessage(results *core.ComponentDeployResults) slack.MsgOption {
 	message := ""
-	if len(results.StdErr) > 0 {
-		message = fmt.Sprintf(":x: Failed component \"%s\" deployment to environment \"%s\"",
+	if results.ExitCode == 0 {
+		message = fmt.Sprintf(":white_check_mark: Component \"%s\" was deployed to environment \"%s\"",
 			results.Request.ComponentName,
 			config.Config.Environment,
 		)
 	} else {
-		message = fmt.Sprintf(":white_check_mark: Component \"%s\" was deployed to environment \"%s\"",
+		message = fmt.Sprintf(":x: Failed component \"%s\" deployment to environment \"%s\"",
 			results.Request.ComponentName,
 			config.Config.Environment,
 		)

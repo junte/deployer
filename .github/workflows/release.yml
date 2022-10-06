@@ -23,7 +23,7 @@ jobs:
           GOOS=linux
           GO111MODULE=on
           CGO_ENABLED=0
-          go build -a -installsuffix cgo -ldflags="-X 'deployer/internal/core.Version=v${VERSION}'" -o bin/deployer deployer/cmd/server
+          go build -a -installsuffix cgo -ldflags="-X 'deployer/internal/config.Version=v${VERSION}'" -o bin/deployer deployer/cmd/server
           echo "::set-output name=VERSION::$VERSION"
 
       - name: Test

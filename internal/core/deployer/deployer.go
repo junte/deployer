@@ -131,21 +131,26 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 	go deployer.handleReader(&stdout, stdoutReader)
 	go deployer.handleReader(&stderr, stderrReader)
 
+	var exitCode int
+
 	if err = cmd.Wait(); err != nil {
-		if exiterr, isExitErr := err.(*exec.ExitError); isExitErr {
-			if status, isWaitStatus := exiterr.Sys().(syscall.WaitStatus); isWaitStatus {
-				log.Debugf("exit status: %v", status.ExitStatus())
+		if exitErr, isExitErr := err.(*exec.ExitError); isExitErr {
+			if status, isWaitStatus := exitErr.Sys().(syscall.WaitStatus); isWaitStatus {
+				exitCode = status.ExitStatus()
 			}
 		}
 	}
 
 	done <- true
 
+	log.Debugf("exit status: %v", exitCode)
+
 	deployResults = &core.ComponentDeployResults{
-		Request: deployer.request,
-		Config:  deployer.config,
-		StdErr:  stderrLines,
-		StdOut:  stdoutLines,
+		Request:  deployer.request,
+		Config:   deployer.config,
+		StdErr:   stderrLines,
+		StdOut:   stdoutLines,
+		ExitCode: exitCode,
 	}
 
 	return

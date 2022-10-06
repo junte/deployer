@@ -11,8 +11,9 @@ type ComponentDeployRequest struct {
 }
 
 type ComponentDeployResults struct {
-	StdErr  []string
-	StdOut  []string
-	Config  *config.ComponentConfig
-	Request *ComponentDeployRequest
+	StdErr   []string
+	StdOut   []string
+	ExitCode int
+	Config   *config.ComponentConfig
+	Request  *ComponentDeployRequest
 }
