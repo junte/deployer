@@ -59,6 +59,7 @@ func (deployer *ComponentDeployer) deploy() (deployResults *core.ComponentDeploy
 		log.WithError(err).Error("failed creating command cmdStdout pipe")
 		return
 	}
+
 	defer func() {
 		_ = cmdStdout.Close()
 	}()
@@ -68,6 +69,7 @@ func (deployer *ComponentDeployer) deploy() (deployResults *core.ComponentDeploy
 		log.WithError(err).Error("failed creating command cmdStderr pipe")
 		return
 	}
+
 	defer func() {
 		_ = cmdStderr.Close()
 	}()
