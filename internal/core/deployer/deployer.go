@@ -6,7 +6,6 @@ import (
 	"deployer/internal/config"
 	"deployer/internal/core"
 	"deployer/internal/core/notify"
-	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io"
@@ -35,28 +34,43 @@ func (deployer *ComponentDeployer) Deploy() (err error) {
 	return
 }
 
+func (deployer *ComponentDeployer) DeployAsync() {
+	results, err := deployer.deploy()
+	if err != nil {
+		return
+	}
+
+	notify.NotifyComponentDeployed(results)
+}
+
 func (deployer *ComponentDeployer) deploy() (deployResults *core.ComponentDeployResults, err error) {
 	command, err := deployer.prepareCommand(deployer.config.Command, deployer.request.Args)
+
 	if err != nil {
-		err = errors.New(fmt.Sprintf("error on prepare command: %v", err))
+		err = fmt.Errorf("error on prepare command: %v", err)
 		return
 	}
 
 	log.Debugf("exec command: %s", command)
 	cmd := exec.Command(command[0], command[1:]...)
 	cmdStdout, err := cmd.StdoutPipe()
+
 	if err != nil {
 		log.WithError(err).Error("failed creating command cmdStdout pipe")
 		return
 	}
-	defer cmdStdout.Close()
+	defer func() {
+		_ = cmdStdout.Close()
+	}()
 
 	cmdStderr, err := cmd.StderrPipe()
 	if err != nil {
 		log.WithError(err).Error("failed creating command cmdStderr pipe")
 		return
 	}
-	defer cmdStderr.Close()
+	defer func() {
+		_ = cmdStderr.Close()
+	}()
 
 	stdoutReader := bufio.NewReader(cmdStdout)
 	stderrReader := bufio.NewReader(cmdStderr)
@@ -69,12 +83,15 @@ func (deployer *ComponentDeployer) deploy() (deployResults *core.ComponentDeploy
 	stdout := make(chan string)
 	stderr := make(chan string)
 	done := make(chan bool)
+
 	defer close(stderr)
 	defer close(stdout)
 	defer close(done)
 
-	var stdoutLines []string
-	var stderrLines []string
+	var (
+		stdoutLines []string
+		stderrLines []string
+	)
 
 	go func() {
 		for {
@@ -85,9 +102,11 @@ func (deployer *ComponentDeployer) deploy() (deployResults *core.ComponentDeploy
 				}
 
 				stdoutLines = append(stdoutLines, line)
+
 				if deployer.request.Output != nil {
 					*deployer.request.Output <- line
 				}
+
 				log.Debug(line)
 			case line, more := <-stderr:
 				if !more {
@@ -95,9 +114,11 @@ func (deployer *ComponentDeployer) deploy() (deployResults *core.ComponentDeploy
 				}
 
 				stderrLines = append(stderrLines, line)
+
 				if deployer.request.Output != nil {
 					*deployer.request.Output <- line
 				}
+
 				log.Debug(line)
 			case <-done:
 				break

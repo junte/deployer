@@ -18,7 +18,7 @@ func DeployComponent(request *core.ComponentDeployRequest) (err error) {
 	}
 
 	if request.IsAsync {
-		go componentDeployer.Deploy()
+		go componentDeployer.DeployAsync()
 	} else {
 		return componentDeployer.Deploy()
 	}
