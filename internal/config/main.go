@@ -1,8 +1,10 @@
 package config
 
 import (
+	"flag"
 	"fmt"
 	"github.com/spf13/viper"
+	"strings"
 )
 
 type AppConfig struct {
@@ -48,7 +50,12 @@ var Version = "development"
 var Config AppConfig
 
 func ReadConfig() {
-	viper.SetConfigName("config")
+	configFilename := flag.String("config", "config.yaml", "configuration filename (default, ./config.yaml)")
+	flag.Parse()
+
+	configName := strings.Split(*configFilename, ".")[0]
+
+	viper.SetConfigName(configName)
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
 
