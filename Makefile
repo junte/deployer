@@ -11,3 +11,6 @@ tag:
 
 lint:
 	@golangci-lint run
+
+update_libs:
+	@go get -u ./... && go mod tidy

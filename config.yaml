@@ -1,0 +1,5 @@
+port: ":7778"
+components:
+  app:
+    command: [ "./dev/command.sh", "{{ .Args.text }}" ]
+    key: "242134321432143214213"
