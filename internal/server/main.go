@@ -6,7 +6,6 @@ import (
 	"deployer/internal/core/deployer"
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -27,9 +26,9 @@ func Run() {
 	}
 }
 func setupLogging() {
-	logrus.SetLevel(logrus.DebugLevel)
-	logrus.SetFormatter(
-		&logrus.TextFormatter{
+	log.SetLevel(log.DebugLevel)
+	log.SetFormatter(
+		&log.TextFormatter{
 			DisableColors:          false,
 			TimestampFormat:        "2006-01-02 15:04:05",
 			FullTimestamp:          true,
@@ -125,7 +124,7 @@ func deploySync(
 					flusher.Flush()
 				}
 			case <-done:
-				break
+				return
 			}
 		}
 	}()

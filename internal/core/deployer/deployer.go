@@ -24,26 +24,26 @@ type ComponentDeployer struct {
 }
 
 func (deployer *ComponentDeployer) Deploy() (err error) {
-	results, err := deployer.deploy()
+	results, err := deployer.internalDeploy()
 	if err != nil {
 		return
 	}
 
-	notify.NotifyComponentDeployed(results)
+	go notify.NotifyComponentDeployed(results)
 
 	return
 }
 
 func (deployer *ComponentDeployer) DeployAsync() {
-	results, err := deployer.deploy()
+	results, err := deployer.internalDeploy()
 	if err != nil {
 		return
 	}
 
-	notify.NotifyComponentDeployed(results)
+	go notify.NotifyComponentDeployed(results)
 }
 
-func (deployer *ComponentDeployer) deploy() (deployResults *core.ComponentDeployResults, err error) {
+func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.ComponentDeployResults, err error) {
 	command, err := deployer.prepareCommand(deployer.config.Command, deployer.request.Args)
 
 	if err != nil {
@@ -123,7 +123,7 @@ func (deployer *ComponentDeployer) deploy() (deployResults *core.ComponentDeploy
 
 				log.Debug(line)
 			case <-done:
-				break
+				return
 			}
 		}
 	}()
@@ -151,7 +151,7 @@ func (deployer *ComponentDeployer) deploy() (deployResults *core.ComponentDeploy
 	return
 }
 
-func (deployer *ComponentDeployer) handleReader(output *chan string, reader *bufio.Reader) {
+func (_ *ComponentDeployer) handleReader(output *chan string, reader *bufio.Reader) {
 	for {
 		str, err := reader.ReadString('\n')
 		if len(str) == 0 && err != nil {

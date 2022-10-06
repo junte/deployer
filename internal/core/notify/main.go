@@ -6,5 +6,5 @@ import (
 )
 
 func NotifyComponentDeployed(results *core.ComponentDeployResults) {
-	go slack.Notify(results)
+	slack.Notify(results)
 }

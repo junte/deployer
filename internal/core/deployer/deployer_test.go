@@ -13,12 +13,12 @@ func TestPrepareCommand(t *testing.T) {
 		want    []string
 	}{
 		{
-			[]string{"/bin/bash", "-c", "./deploy --tag={{.Args.tag}}"},
+			[]string{"/bin/bash", "-c", "./internalDeploy --tag={{.Args.tag}}"},
 			map[string]string{
 				"tag":     "124",
 				"command": "rm -rf /",
 			},
-			[]string{"/bin/bash", "-c", "./deploy --tag=124"}},
+			[]string{"/bin/bash", "-c", "./internalDeploy --tag=124"}},
 		{
 			[]string{"/bin/bash", "-c", "echo Hello World"},
 			map[string]string{"command": "rm -rf /"},
