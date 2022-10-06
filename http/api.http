@@ -1,0 +1,21 @@
+POST {{ address }}
+Content-Type: application/x-www-form-urlencoded
+
+component=app&key=242134321432143214213&text=bla
+
+###
+
+POST {{ address }}
+Content-Type: application/x-www-form-urlencoded
+
+component=app&key=242134321432143214213&text=bla&async=true
+
+###
+
+POST {{ address }}
+Content-Type: application/x-www-form-urlencoded
+
+component=app&key=242134321432143214213&text=bla&async&param1=1
+
+###
+

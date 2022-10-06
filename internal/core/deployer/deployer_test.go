@@ -1,4 +1,4 @@
-package core
+package deployer
 
 import (
 	"fmt"
@@ -31,9 +31,10 @@ func TestPrepareCommand(t *testing.T) {
 		},
 	}
 
+	deployer := ComponentDeployer{}
 	for _, testCase := range tests {
 		t.Run(fmt.Sprintf("%s,%s", testCase.command, testCase.args), func(t *testing.T) {
-			command, err := prepareCommand(testCase.command, testCase.args)
+			command, err := deployer.prepareCommand(testCase.command, testCase.args)
 			if err != nil {
 				t.Errorf("err: %s", err)
 			} else if !reflect.DeepEqual(command, testCase.want) {

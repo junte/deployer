@@ -1,41 +1,43 @@
-package notify
+package slack
 
 import (
 	"deployer/internal/config"
+	"deployer/internal/core"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
-	"log"
+	"strings"
 )
 
-func notifySlack(component string, componentConfig *config.ComponentConfig, failed bool, stdout, stderr string) {
+func Notify(results *core.ComponentDeployResults) {
 	if config.Config.Notification.Slack.ApiToken == "" {
 		return
 	}
 
-	channel := getSlackChannel(componentConfig)
+	channel := getSlackChannel(results.Config)
 	if channel == "" {
 		return
 	}
 
-	slackMessage := buildSlackMessage(component, failed, stdout, stderr)
+	slackMessage := buildSlackMessage(results)
 
 	client := slack.New(config.Config.Notification.Slack.ApiToken)
 	if _, _, err := client.PostMessage(channel, slackMessage); err != nil {
-		log.Printf("error on slack message send: %v", err)
+		log.WithError(err).Error("error on slack message send")
 		return
 	}
 }
 
-func buildSlackMessage(component string, failed bool, stdout, stderr string) slack.MsgOption {
+func buildSlackMessage(results *core.ComponentDeployResults) slack.MsgOption {
 	message := ""
-	if failed {
+	if len(results.StdErr) > 0 {
 		message = fmt.Sprintf(":x: Failed component \"%s\" deployment to environment \"%s\"",
-			component,
+			results.Request.ComponentName,
 			config.Config.Environment,
 		)
 	} else {
 		message = fmt.Sprintf(":white_check_mark: Component \"%s\" was deployed to environment \"%s\"",
-			component,
+			results.Request.ComponentName,
 			config.Config.Environment,
 		)
 	}
@@ -45,14 +47,14 @@ func buildSlackMessage(component string, failed bool, stdout, stderr string) sla
 		Title:   ":memo: stdout",
 		Pretext: message,
 		Color:   "#36a64f",
-		Text:    stdout,
+		Text:    strings.Join(results.StdOut, "\n"),
 	})
 
-	if stderr != "" {
+	if len(results.StdErr) > 0 {
 		attachments = append(attachments, slack.Attachment{
 			Title: ":fire: stderr",
 			Color: "#eb343a",
-			Text:  stderr,
+			Text:  strings.Join(results.StdErr, "\n"),
 		})
 	}
 
