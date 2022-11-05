@@ -82,10 +82,10 @@ desired place.
 
 If you don't need wait for deploy results, you can add `async` query param. For example:
 
-```http request
-http://deploy.com/component=app&key=242134321432143214213&text=bla&async
+```
+...component=app&async
 
-http://deploy.com/component=app&key=242134321432143214213&text=bla&async=true
+...component=app&async=true
 ```
 
 ## Examples
