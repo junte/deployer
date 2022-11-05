@@ -1,9 +1,5 @@
 port: ":7778"
 env: "local:dev"
-notification:
-  slack:
-    apiToken: "xoxb-29691751329-2102757005219-vMjkf0xkudP2jxvXPhbR4RrA"
-    channel: "#deployments"
 components:
   app:
     command: [ "./dev/command.sh", "{{ .Args.text }}" ]
