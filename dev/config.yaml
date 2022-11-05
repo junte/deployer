@@ -3,3 +3,4 @@ components:
   app:
     command: [ "./dev/command.sh", "{{ .Args.text }}" ]
     key: "242134321432143214213"
+#    workdir: "~/Develop"

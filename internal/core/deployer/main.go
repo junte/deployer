@@ -4,6 +4,7 @@ import (
 	"deployer/internal/config"
 	"deployer/internal/core"
 	"errors"
+	"fmt"
 )
 
 func DeployComponent(request *core.ComponentDeployRequest) (err error) {
@@ -29,7 +30,7 @@ func DeployComponent(request *core.ComponentDeployRequest) (err error) {
 func getComponentConfig(request *core.ComponentDeployRequest) (component config.ComponentConfig, err error) {
 	component, ok := config.Config.Components[request.ComponentName]
 	if !ok {
-		err = errors.New("component not found")
+		err = fmt.Errorf("component not found: %s", request.ComponentName)
 		return
 	}
 

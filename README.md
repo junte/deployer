@@ -4,17 +4,23 @@
 
 ## Overview
 
-One of the most important aspects of DevOps is to deploy a new application version from ci/cd tool (GitLab, GitHub
+One of the most important aspects of DevOps is to deploy a new application version from ci/cd tool (
+GitLab, GitHub
 Actions,...) to target linux servers.
-As a solution, you can put a private key to the ci/cd tool, then log to the target server by ssh and run the deploy
+As a solution, you can put a private key to the ci/cd tool, then log to the target server by ssh and
+run the deploy
 script.
-BUT! It is very dangerous: your private key can be stolen by cybercriminals on the ci/cd provider side.
-This tool suggests another approach: the deployer background task is running on the target server and listening to the
+BUT! It is very dangerous: your private key can be stolen by cybercriminals on the ci/cd provider
+side.
+This tool suggests another approach: the deployer background task is running on the target server
+and listening to the
 public port.
-From the deploy stage of the ci/cd pipeline, you can post an HTTP request in the specified format to this port and the
+From the deploy stage of the ci/cd pipeline, you can post an HTTP request in the specified format to
+this port and the
 tool will execute the deploy command.
 No private information should be stored on the ci/cd provider (only deployer address).
-Even if somebody will have access to your settings on ci/cd provider he can't run custom script on the target server
+Even if somebody will have access to your settings on ci/cd provider he can't run custom script on
+the target server
 because you control allowed commands
 
 ## Installation
@@ -55,7 +61,8 @@ notification: # optional - notifications config
     channel: "#deployments" # slack channel to send message
 components: # list of components for deploy
   backend: # component name. Value of "component" query parameter
-    command: [ "/opt/services/app/deploy_backend.sh", "--tag={{ .Args.tag }}" ] # required - deploy command
+    workdir: /opt/services/app/ # if set - use the workdir
+    command: [ "./deploy_backend.sh", "--tag={{ .Args.tag }}" ] # required - deploy command
     key: "<...>" # optional - random key for additional protection. If not provided - don't check. Value of "key" query parameter 
   frontend:
     command: [ "/opt/services/app/deploy_frontend.sh", "--tag={{ .Args.tag }}" ] # required - deploy command
@@ -63,10 +70,23 @@ components: # list of components for deploy
 
 ### Command format
 
+#### Arguments
+
 The command can be any shell script with/without parameters.
 In a request to deployer, some additional query parameters can be provided.
 They can be injected in command in format `{{ .Args.<query_parameter> }}`.
-For example, the `tag` query parameter can be used in command by adding `{{ .Args.tag }}` to the desired place.
+For example, the `tag` query parameter can be used in command by adding `{{ .Args.tag }}` to the
+desired place.
+
+#### Async
+
+If you don't need wait for deploy results, you can add `async` query param. For example:
+
+```http request
+http://deploy.com/component=app&key=242134321432143214213&text=bla&async
+
+http://deploy.com/component=app&key=242134321432143214213&text=bla&async=true
+```
 
 ## Examples
 

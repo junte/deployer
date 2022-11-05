@@ -53,6 +53,7 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 
 	log.Debugf("exec command: %s", command)
 	cmd := exec.Command(command[0], command[1:]...) //nolint:gosec
+	cmd.Dir = deployer.config.WorkDir
 	cmdStdout, err := cmd.StdoutPipe()
 
 	if err != nil {

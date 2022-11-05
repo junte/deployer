@@ -27,6 +27,7 @@ type SlackConfig struct {
 type ComponentConfig struct {
 	Command      []string
 	Key          string
+	WorkDir      string
 	Notification ComponentNotificationConfig
 }
 
