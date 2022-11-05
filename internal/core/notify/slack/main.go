@@ -47,14 +47,14 @@ func buildSlackMessage(results *core.ComponentDeployResults) slack.MsgOption {
 		Title:   ":memo: stdout",
 		Pretext: message,
 		Color:   "#36a64f",
-		Text:    strings.Join(results.StdOut, "\n"),
+		Text:    strings.Join(results.StdOut, ""),
 	})
 
 	if len(results.StdErr) > 0 {
 		attachments = append(attachments, slack.Attachment{
 			Title: ":fire: stderr",
 			Color: "#eb343a",
-			Text:  strings.Join(results.StdErr, "\n"),
+			Text:  strings.Join(results.StdErr, ""),
 		})
 	}
 
