@@ -122,6 +122,7 @@ func deploySync(
 					flusher.Flush()
 				}
 			case <-done:
+				flusher.Flush()
 				return
 			}
 		}
