@@ -1,15 +1,17 @@
 package server
 
 import (
-	"deployer/internal/config"
-	"deployer/internal/core"
-	"deployer/internal/core/deployer"
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"time"
+
+	"deployer/internal/config"
+	"deployer/internal/core"
+	"deployer/internal/core/deployer"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func Run() {
@@ -25,6 +27,7 @@ func Run() {
 		panic(err)
 	}
 }
+
 func setupLogging() {
 	log.SetLevel(log.DebugLevel)
 	log.SetFormatter(
@@ -43,9 +46,11 @@ func startServer() (err error) {
 
 	if config.Config.TLS.Cert != "" && config.Config.TLS.Key != "" {
 		log.Infof("starting https server on port %s", config.Config.Port)
+
 		err = server.ListenAndServeTLS(config.Config.TLS.Cert, config.Config.TLS.Key)
 	} else {
 		log.Infof("starting http server on port %s", config.Config.Port)
+
 		err = server.ListenAndServe()
 	}
 
