@@ -3,15 +3,17 @@ package deployer
 import (
 	"bufio"
 	"bytes"
-	"deployer/internal/config"
-	"deployer/internal/core"
-	"deployer/internal/core/notify"
+	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"io"
 	"os/exec"
 	"syscall"
 	"text/template"
+
+	"deployer/internal/config"
+	"deployer/internal/core"
+	"deployer/internal/core/notify"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type commandTemplateContext struct {
@@ -45,7 +47,6 @@ func (deployer *ComponentDeployer) DeployAsync() {
 
 func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.ComponentDeployResults, err error) {
 	command, err := deployer.prepareCommand(deployer.config.Command, deployer.request.Args)
-
 	if err != nil {
 		err = fmt.Errorf("error on prepare command: %v", err)
 		return
@@ -54,8 +55,8 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 	log.Debugf("exec command: %s", command)
 	cmd := exec.Command(command[0], command[1:]...) //nolint:gosec
 	cmd.Dir = deployer.config.WorkDir
-	cmdStdout, err := cmd.StdoutPipe()
 
+	cmdStdout, err := cmd.StdoutPipe()
 	if err != nil {
 		log.WithError(err).Error("failed creating command cmdStdout pipe")
 		return
@@ -85,11 +86,11 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 
 	stdout := make(chan string)
 	stderr := make(chan string)
-	done := make(chan bool)
 
 	defer close(stderr)
 	defer close(stdout)
-	defer close(done)
+
+	context, contextCancel := context.WithCancel(context.Background())
 
 	var (
 		stdoutLines []string
@@ -123,14 +124,14 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 				}
 
 				log.Debug(line)
-			case <-done:
+			case <-context.Done():
 				return
 			}
 		}
 	}()
 
-	go deployer.handleReader(&stdout, stdoutReader)
-	go deployer.handleReader(&stderr, stderrReader)
+	go deployer.handleReader(context, &stdout, stdoutReader)
+	go deployer.handleReader(context, &stderr, stderrReader)
 
 	var exitCode int
 
@@ -142,7 +143,7 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 		}
 	}
 
-	done <- true
+	contextCancel()
 
 	log.Debugf("exit status: %v", exitCode)
 
@@ -157,16 +158,23 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 	return
 }
 
-func (*ComponentDeployer) handleReader(output *chan string, reader *bufio.Reader) {
+func (*ComponentDeployer) handleReader(
+	context context.Context,
+	output *chan string,
+	reader *bufio.Reader,
+) {
 	for {
-		str, err := reader.ReadString('\n')
-		if len(str) == 0 && err != nil {
-			if err == io.EOF {
-				break
+		select {
+		case <-context.Done():
+			return
+		default:
+			str, err := reader.ReadString('\n')
+			if err != nil {
+				return
 			}
-		}
 
-		*output <- str
+			*output <- str
+		}
 	}
 }
 

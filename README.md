@@ -82,7 +82,7 @@ desired place.
 
 If you don't need wait for deploy results, you can add `async` query param. For example:
 
-```
+```bash
 ...&text=bla&async...
 or 
 ...&text=bla&async=true...
@@ -107,7 +107,7 @@ deploy:
     - curl -X POST -d "component=backend&key=${DEPLOYER_KEY}&tag=${CI_PIPELINE_ID}" ${DEPLOYER_HOST}
 ```
 
-* DEPLOYER_KEY, DEPLOYER_HOST are taken from ci/cd variables setting
+- DEPLOYER_KEY, DEPLOYER_HOST are taken from ci/cd variables setting
 
 ### GitHub Actions
 
@@ -120,4 +120,4 @@ deploy:
       run: curl -k -X POST -d "component=backend&key=${{ secrets.DEPLOYER_KEY }}&tag=${{ tag }}" ${{ secrets.DEPLOYER_HOST }}
 ```
 
-* DEPLOYER_KEY, DEPLOYER_HOST are taken from github secrets 
+- DEPLOYER_KEY, DEPLOYER_HOST are taken from github secrets
