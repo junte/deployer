@@ -31,7 +31,7 @@ because you control allowed commands
 
 As a suggestion, use the systemd as a manager for the tool. Systemd service file example:
 
-```
+```unit
 [Unit]
 Description=Deployer service.
 
