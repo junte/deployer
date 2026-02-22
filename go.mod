@@ -1,6 +1,6 @@
 module deployer
 
-go 1.19
+go 1.26
 
 require (
 	github.com/sirupsen/logrus v1.9.0
