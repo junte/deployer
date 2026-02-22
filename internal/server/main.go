@@ -125,7 +125,7 @@ func deploySync(
 					break
 				}
 
-				_, err := io.WriteString(writer, line)
+				_, err := io.WriteString(writer, fmt.Sprintf("data: %s\n", line))
 				if err == nil {
 					flusher.Flush()
 				}
