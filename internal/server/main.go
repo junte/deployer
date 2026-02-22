@@ -38,11 +38,13 @@ func setupLogging() {
 	)
 }
 
-func startServer() (err error) {
+func startServer() error {
 	server := &http.Server{
 		Addr:              config.Config.Port,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
+
+	var err error
 
 	if config.Config.TLS.Cert != "" && config.Config.TLS.Key != "" {
 		log.Infof("starting https server on port %s", config.Config.Port)
@@ -54,7 +56,11 @@ func startServer() (err error) {
 		err = server.ListenAndServe()
 	}
 
-	return
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return fmt.Errorf("server error: %w", err)
+	}
+
+	return nil
 }
 
 func handler(writer http.ResponseWriter, request *http.Request) {
@@ -93,11 +99,10 @@ func deploySync(
 	componentKey string,
 	args map[string]string,
 	writer http.ResponseWriter,
-) (err error) {
+) error {
 	flusher, ok := writer.(http.Flusher)
 	if !ok {
-		err = errors.New("can't stream to response")
-		return
+		return errors.New("can't stream to response")
 	}
 
 	writer.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
@@ -121,8 +126,7 @@ func deploySync(
 					break
 				}
 
-				_, err = io.WriteString(writer, line)
-
+				_, err := io.WriteString(writer, line)
 				if err == nil {
 					flusher.Flush()
 				}
@@ -133,7 +137,7 @@ func deploySync(
 		}
 	}()
 
-	err = deployer.DeployComponent(
+	err := deployer.DeployComponent(
 		&core.ComponentDeployRequest{
 			ComponentName: componentName,
 			ComponentKey:  componentKey,
@@ -145,7 +149,11 @@ func deploySync(
 
 	done <- true
 
-	return
+	if err != nil {
+		return fmt.Errorf("deploy err: %w", err)
+	}
+
+	return nil
 }
 
 func deployAsync(

@@ -1,16 +1,16 @@
 package deployer
 
 import (
+	"fmt"
+
 	"deployer/internal/config"
 	"deployer/internal/core"
-	"errors"
-	"fmt"
 )
 
-func DeployComponent(request *core.ComponentDeployRequest) (err error) {
+func DeployComponent(request *core.ComponentDeployRequest) error {
 	componentConfig, err := getComponentConfig(request)
 	if err != nil {
-		return
+		return fmt.Errorf("error on get component config: %w", err)
 	}
 
 	componentDeployer := ComponentDeployer{
@@ -24,20 +24,18 @@ func DeployComponent(request *core.ComponentDeployRequest) (err error) {
 		return componentDeployer.Deploy()
 	}
 
-	return
+	return nil
 }
 
-func getComponentConfig(request *core.ComponentDeployRequest) (component config.ComponentConfig, err error) {
+func getComponentConfig(request *core.ComponentDeployRequest) (config.ComponentConfig, error) {
 	component, ok := config.Config.Components[request.ComponentName]
 	if !ok {
-		err = fmt.Errorf("component not found: %s", request.ComponentName)
-		return
+		return config.ComponentConfig{}, fmt.Errorf("component not found: %s", request.ComponentName)
 	}
 
 	if component.Key != "" && component.Key != request.ComponentKey {
-		err = errors.New("keys mismatch")
-		return
+		return config.ComponentConfig{}, fmt.Errorf("invalid component key for component: %s", request.ComponentName)
 	}
 
-	return
+	return component, nil
 }

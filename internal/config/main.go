@@ -3,8 +3,9 @@ package config
 import (
 	"flag"
 	"fmt"
-	"github.com/spf13/viper"
 	"strings"
+
+	"github.com/spf13/viper"
 )
 
 type AppConfig struct {
@@ -20,6 +21,7 @@ type NotificationConfig struct {
 }
 
 type SlackConfig struct {
+	// nolint:gosec
 	ApiToken string
 	Channel  string
 }
@@ -52,6 +54,7 @@ var Config AppConfig
 
 func ReadConfig() {
 	configFilename := flag.String("config", "config.yaml", "configuration filename (default, ./config.yaml)")
+
 	flag.Parse()
 
 	configName := strings.Split(*configFilename, ".")[0]
@@ -62,11 +65,11 @@ func ReadConfig() {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("fatal error config file: %s", err))
+		panic(fmt.Errorf("fatal error config file: %w", err))
 	}
 
 	err = viper.Unmarshal(&Config)
 	if err != nil {
-		panic(fmt.Errorf("fatal error bad config file: %s", err))
+		panic(fmt.Errorf("fatal error bad config file: %w", err))
 	}
 }

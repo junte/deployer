@@ -1,12 +1,14 @@
 package slack
 
 import (
+	"fmt"
+	"strings"
+
 	"deployer/internal/config"
 	"deployer/internal/core"
-	"fmt"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
-	"strings"
 )
 
 func Notify(results *core.ComponentDeployResults) {
@@ -43,6 +45,7 @@ func buildSlackMessage(results *core.ComponentDeployResults) slack.MsgOption {
 	}
 
 	var attachments []slack.Attachment
+
 	attachments = append(attachments, slack.Attachment{
 		Title:   ":memo: stdout",
 		Pretext: message,

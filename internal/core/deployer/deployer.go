@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"syscall"
@@ -25,15 +26,15 @@ type ComponentDeployer struct {
 	config  *config.ComponentConfig
 }
 
-func (deployer *ComponentDeployer) Deploy() (err error) {
+func (deployer *ComponentDeployer) Deploy() error {
 	results, err := deployer.internalDeploy()
 	if err != nil {
-		return
+		return fmt.Errorf("error on deploy component: %w", err)
 	}
 
 	go notify.NotifyComponentDeployed(results)
 
-	return
+	return nil
 }
 
 func (deployer *ComponentDeployer) DeployAsync() {
@@ -48,7 +49,7 @@ func (deployer *ComponentDeployer) DeployAsync() {
 func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.ComponentDeployResults, err error) {
 	command, err := deployer.prepareCommand(deployer.config.Command, deployer.request.Args)
 	if err != nil {
-		err = fmt.Errorf("error on prepare command: %v", err)
+		err = fmt.Errorf("error on prepare command: %w", err)
 		return
 	}
 
@@ -136,7 +137,8 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 	var exitCode int
 
 	if err = cmd.Wait(); err != nil {
-		if exitErr, isExitErr := err.(*exec.ExitError); isExitErr {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) {
 			if status, isWaitStatus := exitErr.Sys().(syscall.WaitStatus); isWaitStatus {
 				exitCode = status.ExitStatus()
 			}
@@ -178,26 +180,30 @@ func (*ComponentDeployer) handleReader(
 	}
 }
 
-func (*ComponentDeployer) prepareCommand(commandTemplate []string, args map[string]string) (command []string, err error) {
+func (*ComponentDeployer) prepareCommand(
+	commandTemplate []string,
+	args map[string]string,
+) ([]string, error) {
 	context := commandTemplateContext{
 		Args: args,
 	}
 
-	for _, commandItem := range commandTemplate {
-		var parsedTemplate *template.Template
+	var command []string
 
-		if parsedTemplate, err = template.New(commandItem).Parse(commandItem); err != nil {
-			return
+	for _, commandItem := range commandTemplate {
+		parsedTemplate, err := template.New(commandItem).Parse(commandItem)
+		if err != nil {
+			return nil, fmt.Errorf("error on parse command template: %w", err)
 		}
 
 		var templateBuffer bytes.Buffer
 
 		if err = parsedTemplate.Execute(&templateBuffer, context); err != nil {
-			return
+			return nil, fmt.Errorf("error on execute command template: %w", err)
 		}
 
 		command = append(command, templateBuffer.String())
 	}
 
-	return
+	return command, nil
 }
