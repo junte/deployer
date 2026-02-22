@@ -26,15 +26,15 @@ type ComponentDeployer struct {
 	config  *config.ComponentConfig
 }
 
-func (deployer *ComponentDeployer) Deploy() error {
+func (deployer *ComponentDeployer) Deploy() (*core.ComponentDeployResults, error) {
 	results, err := deployer.internalDeploy()
 	if err != nil {
-		return fmt.Errorf("error on deploy component: %w", err)
+		return nil, fmt.Errorf("error on deploy component: %w", err)
 	}
 
 	go notify.NotifyComponentDeployed(results)
 
-	return nil
+	return results, nil
 }
 
 func (deployer *ComponentDeployer) DeployAsync() {
@@ -46,11 +46,10 @@ func (deployer *ComponentDeployer) DeployAsync() {
 	go notify.NotifyComponentDeployed(results)
 }
 
-func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.ComponentDeployResults, err error) {
+func (deployer *ComponentDeployer) internalDeploy() (*core.ComponentDeployResults, error) {
 	command, err := deployer.prepareCommand(deployer.config.Command, deployer.request.Args)
 	if err != nil {
-		err = fmt.Errorf("error on prepare command: %w", err)
-		return
+		return nil, fmt.Errorf("error on prepare command: %w", err)
 	}
 
 	log.Debugf("exec command: %s", command)
@@ -60,7 +59,7 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 	cmdStdout, err := cmd.StdoutPipe()
 	if err != nil {
 		log.WithError(err).Error("failed creating command cmdStdout pipe")
-		return
+		return nil, fmt.Errorf("error creating stdout pipe: %w", err)
 	}
 
 	defer func() {
@@ -70,7 +69,7 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 	cmdStderr, err := cmd.StderrPipe()
 	if err != nil {
 		log.WithError(err).Error("failed creating command cmdStderr pipe")
-		return
+		return nil, fmt.Errorf("error creating stderr pipe: %w", err)
 	}
 
 	defer func() {
@@ -82,7 +81,7 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 
 	if err = cmd.Start(); err != nil {
 		log.WithError(err).Error("failed starting command")
-		return
+		return nil, fmt.Errorf("error starting command: %w", err)
 	}
 
 	stdout := make(chan string)
@@ -98,38 +97,7 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 		stderrLines []string
 	)
 
-	go func() {
-		for {
-			select {
-			case line, more := <-stdout:
-				if !more {
-					break
-				}
-
-				stdoutLines = append(stdoutLines, line)
-
-				if deployer.request.Output != nil {
-					*deployer.request.Output <- line
-				}
-
-				log.Debug(line)
-			case line, more := <-stderr:
-				if !more {
-					break
-				}
-
-				stderrLines = append(stderrLines, line)
-
-				if deployer.request.Output != nil {
-					*deployer.request.Output <- line
-				}
-
-				log.Debug(line)
-			case <-context.Done():
-				return
-			}
-		}
-	}()
+	go deployer.aggregateOutput(context, &stdout, &stderr, &stdoutLines, &stderrLines)
 
 	go deployer.handleReader(context, &stdout, stdoutReader)
 	go deployer.handleReader(context, &stderr, stderrReader)
@@ -149,7 +117,7 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 
 	log.Debugf("exit status: %v", exitCode)
 
-	deployResults = &core.ComponentDeployResults{
+	deployResults := &core.ComponentDeployResults{
 		Request:  deployer.request,
 		Config:   deployer.config,
 		StdErr:   stderrLines,
@@ -157,7 +125,7 @@ func (deployer *ComponentDeployer) internalDeploy() (deployResults *core.Compone
 		ExitCode: exitCode,
 	}
 
-	return
+	return deployResults, nil
 }
 
 func (*ComponentDeployer) handleReader(
@@ -176,6 +144,41 @@ func (*ComponentDeployer) handleReader(
 			}
 
 			*output <- str
+		}
+	}
+}
+
+func (deployer *ComponentDeployer) aggregateOutput(
+	context context.Context,
+	stdout *chan string,
+	stderr *chan string,
+	stdoutLines *[]string,
+	stderrLines *[]string,
+) {
+	for {
+		select {
+		case line, ok := <-*stdout:
+			if ok {
+				*stdoutLines = append(*stdoutLines, line)
+
+				if deployer.request.Output != nil {
+					*deployer.request.Output <- line
+				}
+
+				log.Debug(line)
+			}
+		case line, ok := <-*stderr:
+			if ok {
+				*stderrLines = append(*stderrLines, line)
+
+				if deployer.request.Output != nil {
+					*deployer.request.Output <- line
+				}
+
+				log.Debug(line)
+			}
+		case <-context.Done():
+			return
 		}
 	}
 }

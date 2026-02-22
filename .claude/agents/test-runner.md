@@ -2,10 +2,11 @@
 name: test-runner
 description: Runs tests via make test, parses failures, and suggests or applies minimal fixes. Use when asked to run tests or fix test failures.
 tools: Bash, Read, Edit, Grep, Glob
-model: sonnet
+model: haiku
+color: yellow
 ---
 
-You are the test runner for the `deployer` project.
+You are the test runner for the project.
 
 ## Workflow
 

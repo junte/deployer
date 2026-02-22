@@ -115,8 +115,7 @@ func deploySync(
 	output := make(chan string)
 	defer close(output)
 
-	done := make(chan bool)
-	defer close(done)
+	done := make(chan int)
 
 	go func() {
 		for {
@@ -130,14 +129,20 @@ func deploySync(
 				if err == nil {
 					flusher.Flush()
 				}
-			case <-done:
-				flusher.Flush()
+			case exitCode := <-done:
+				exitEvent := fmt.Sprintf("event: exit\ndata: %d\n\n", exitCode)
+
+				_, err := io.WriteString(writer, exitEvent)
+				if err == nil {
+					flusher.Flush()
+				}
+
 				return
 			}
 		}
 	}()
 
-	err := deployer.DeployComponent(
+	results, err := deployer.DeployComponent(
 		&core.ComponentDeployRequest{
 			ComponentName: componentName,
 			ComponentKey:  componentKey,
@@ -147,7 +152,12 @@ func deploySync(
 		},
 	)
 
-	done <- true
+	exitCode := 0
+	if results != nil {
+		exitCode = results.ExitCode
+	}
+
+	done <- exitCode
 
 	if err != nil {
 		return fmt.Errorf("deploy err: %w", err)
@@ -161,7 +171,7 @@ func deployAsync(
 	componentKey string,
 	args map[string]string,
 ) error {
-	return deployer.DeployComponent(
+	_, err := deployer.DeployComponent(
 		&core.ComponentDeployRequest{
 			ComponentName: componentName,
 			ComponentKey:  componentKey,
@@ -170,6 +180,8 @@ func deployAsync(
 			IsAsync:       true,
 		},
 	)
+
+	return err
 }
 
 func extractArgs(request *http.Request) map[string]string {
