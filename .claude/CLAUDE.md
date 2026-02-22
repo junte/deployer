@@ -17,6 +17,7 @@ make tag            # Create git tag from VERSION file
 ```
 
 Run a single test file:
+
 ```bash
 go test -v ./internal/core/deployer/...
 ```
@@ -75,3 +76,17 @@ Development config lives in `dev/config.yaml`. Example HTTP requests are in `htt
 ## Module
 
 Module path: `deployer` (Go 1.19). Binary entry point: `cmd/server/main.go`.
+
+## Subagents
+
+Use these subagents automatically when the situation matches — no need to ask.
+
+| Agent | When to use |
+|---|---|
+| `go-reviewer` | After writing or modifying any Go file — review against codestyle rules |
+| `security-auditor` | When auth, key handling, command execution, or config parsing is touched |
+| `test-runner` | When asked to run tests or when a test failure needs to be diagnosed and fixed |
+
+## Notes
+
+- Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask
