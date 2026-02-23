@@ -7,6 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -20,7 +22,7 @@ jobs:
 
       - name: Build
         id: build
-        run: go build deployer/cmd/server
+        run: make build
 
       - name: Test
         run: go test -v ./...

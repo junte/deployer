@@ -8,30 +8,61 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+          - os: linux
+            arch: arm64
+          - os: darwin
+            arch: amd64
+          - os: darwin
+            arch: arm64
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: 1.26
 
-      - name: Build
-        id: build
-        run: |
-          VERSION=$(cat VERSION)
-          GOOS=linux
-          GO111MODULE=on
-          CGO_ENABLED=0
-          go build -a -installsuffix cgo -ldflags="-X 'deployer/internal/config.Version=v${VERSION}'" -o bin/deployer deployer/cmd/server
-          echo "::set-output name=VERSION::$VERSION"
-
       - name: Test
         run: go test -v ./...
+
+      - name: Build
+        run: |
+          GIT_VERSION=$(git describe --tags --always --dirty)
+          CGO_ENABLED=0 GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} \
+            go build -a -installsuffix cgo \
+            -ldflags="-X 'deployer/internal/config.Version=${GIT_VERSION}'" \
+            -o bin/deployer-${{ matrix.os }}-${{ matrix.arch }} deployer/cmd/server
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployer-${{ matrix.os }}-${{ matrix.arch }}
+          path: bin/deployer-${{ matrix.os }}-${{ matrix.arch }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: bin/
+          merge-multiple: true
 
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          files: bin/deployer
+          files: bin/deployer-*
           generate_release_notes: true
