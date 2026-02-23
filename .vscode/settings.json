@@ -1,0 +1,21 @@
+{
+  "go.lintTool": "golangci-lint",
+  "go.lintFlags": [
+    "--fast"
+  ],
+  "rest-client.environmentVariables": {
+    "local": {
+      "address": "http://localhost:7778",
+    },
+  },
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "file": ".claude/rules/commit-messages.md"
+    }
+  ],
+  "github.copilot.chat.reviewSelection.instructions": [
+    {
+      "file": ".claude/rules/go-codestyle.md"
+    }
+  ],
+}
