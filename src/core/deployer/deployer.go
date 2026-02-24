@@ -10,9 +10,9 @@ import (
 	"syscall"
 	"text/template"
 
-	"deployer/internal/config"
-	"deployer/internal/core"
-	"deployer/internal/core/notify"
+	"deployer/src/config"
+	"deployer/src/core"
+	"deployer/src/core/notify"
 
 	log "github.com/sirupsen/logrus"
 )

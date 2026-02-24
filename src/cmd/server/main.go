@@ -1,7 +1,7 @@
 package main
 
 import (
-	"deployer/internal/server"
+	"deployer/src/server"
 )
 
 func main() {

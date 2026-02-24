@@ -3,8 +3,8 @@ package deployer
 import (
 	"fmt"
 
-	"deployer/internal/config"
-	"deployer/internal/core"
+	"deployer/src/config"
+	"deployer/src/core"
 )
 
 func DeployComponent(request *core.ComponentDeployRequest) (*core.ComponentDeployResults, error) {

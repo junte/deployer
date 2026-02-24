@@ -1,16 +1,16 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "app",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}/cmd/server",
-            "args": [
-                "--config=dev/config.yaml"
-            ],
-            "cwd": "${workspaceFolder}",
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "app",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/src/cmd/server",
+      "args": [
+        "--config=tools/dev/config.yaml"
+      ],
+      "cwd": "${workspaceFolder}",
+    }
+  ]
 }

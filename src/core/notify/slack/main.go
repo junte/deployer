@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"deployer/internal/config"
-	"deployer/internal/core"
+	"deployer/src/config"
+	"deployer/src/core"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"

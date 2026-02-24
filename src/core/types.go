@@ -1,6 +1,6 @@
 package core
 
-import "deployer/internal/config"
+import "deployer/src/config"
 
 type ComponentDeployRequest struct {
 	ComponentName string

@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"deployer/internal/config"
-	"deployer/internal/core"
-	"deployer/internal/core/deployer"
+	"deployer/src/config"
+	"deployer/src/core"
+	"deployer/src/core/deployer"
 
 	log "github.com/sirupsen/logrus"
 )
