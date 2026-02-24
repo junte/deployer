@@ -1,7 +1,6 @@
 package config
 
 import (
-	"flag"
 	"fmt"
 	"strings"
 
@@ -52,12 +51,8 @@ var Version = "development"
 // Config of application runtime.
 var Config AppConfig
 
-func ReadConfig() {
-	configFilename := flag.String("config", "config.yaml", "configuration filename (default, ./config.yaml)")
-
-	flag.Parse()
-
-	configName := strings.Split(*configFilename, ".")[0]
+func ReadConfig(configFile string) error {
+	configName := strings.Split(configFile, ".")[0]
 
 	viper.SetConfigName(configName)
 	viper.SetConfigType("yaml")
@@ -65,11 +60,13 @@ func ReadConfig() {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("fatal error config file: %w", err))
+		return fmt.Errorf("error reading config file: %w", err)
 	}
 
 	err = viper.Unmarshal(&Config)
 	if err != nil {
-		panic(fmt.Errorf("fatal error bad config file: %w", err))
+		return fmt.Errorf("error parsing config file: %w", err)
 	}
+
+	return nil
 }

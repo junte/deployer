@@ -14,18 +14,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func Run() {
-	config.ReadConfig()
+func Run(configFile string) error {
+	err := config.ReadConfig(configFile)
+	if err != nil {
+		return err
+	}
+
 	setupLogging()
 
 	log.Infof("version: %s", config.Version)
 
 	http.HandleFunc("/", handler)
 
-	err := startServer()
-	if err != nil {
-		panic(err)
-	}
+	return startServer()
 }
 
 func setupLogging() {

@@ -15,10 +15,18 @@ applyTo: "**/*.go"
 - use context where possible
 - don't use multi expressions in "if" and other statements. Split to lines
 - use lowercase first letters in logger messages
-- try split such expression to separate lines:
-  "err := downloader.cache.Put(ctx, file.SHA256, file.Dest); err != nil" must be
-  "err := downloader.cache.Put(ctx, file.SHA256, file.Dest)
-    if err != nil: ... "
+- NEVER use combined assignment and condition in one statement. Always split into two lines:
+
+  ```go
+  // WRONG — never do this
+  if err := doSomething(); err != nil { ... }
+
+  // CORRECT — always split
+  err := doSomething()
+  if err != nil { ... }
+  ```
+
+  This applies to every case without exception — short calls, single-liners, all of them.
 
 **Error handling:**
 

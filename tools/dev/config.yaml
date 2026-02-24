@@ -2,6 +2,6 @@ port: ":7778"
 env: "local:dev"
 components:
   app:
-    command: [ "./dev/command.sh", "{{ .Args.text }}" ]
+    command: [ "./tools/dev/command.sh", "{{ .Args.text }}" ]
     key: "242134321432143214213"
 #    workdir: "~/Develop"
