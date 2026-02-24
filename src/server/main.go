@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -70,7 +71,8 @@ func handler(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	if err := request.ParseForm(); err != nil {
+	err := request.ParseForm()
+	if err != nil {
 		http.Error(writer, fmt.Sprintf("wrong query params err: %v", err), http.StatusBadRequest)
 		return
 	}
@@ -79,20 +81,44 @@ func handler(writer http.ResponseWriter, request *http.Request) {
 	componentName := request.FormValue("component")
 	componentKey := request.FormValue("key")
 
-	var err error
-
 	isAsync := request.Form["async"] != nil
 
+	var deployErr error
+
 	if isAsync {
-		err = deployAsync(componentName, componentKey, args)
+		deployErr = deployAsync(componentName, componentKey, args)
 	} else {
-		err = deploySync(componentName, componentKey, args, writer)
+		deployErr = deploySync(componentName, componentKey, args, writer)
 	}
 
-	if err != nil {
-		http.Error(writer, fmt.Sprintf("deploy err: %v", err), http.StatusBadRequest)
+	if deployErr != nil {
+		http.Error(writer, fmt.Sprintf("deploy err: %v", deployErr), http.StatusBadRequest)
 		return
 	}
+}
+
+type outputEventData struct {
+	Message string `json:"message"`
+}
+
+type exitEventData struct {
+	ExitCode int `json:"exit_code"`
+}
+
+func writeSSEEvent(writer io.Writer, flusher http.Flusher, eventName string, data any) error {
+	payload, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("marshal sse event %q: %w", eventName, err)
+	}
+
+	_, err = fmt.Fprintf(writer, "event: %s\ndata: %s\n\n", eventName, payload)
+	if err != nil {
+		return fmt.Errorf("write sse event %q: %w", eventName, err)
+	}
+
+	flusher.Flush()
+
+	return nil
 }
 
 func deploySync(
@@ -114,34 +140,15 @@ func deploySync(
 	flusher.Flush()
 
 	output := make(chan string)
-	defer close(output)
-
-	done := make(chan int)
 	finished := make(chan struct{})
 
 	go func() {
 		defer close(finished)
 
-		for {
-			select {
-			case line, more := <-output:
-				if !more {
-					return
-				}
-
-				_, err := io.WriteString(writer, fmt.Sprintf("data: %s\n", line))
-				if err == nil {
-					flusher.Flush()
-				}
-			case exitCode := <-done:
-				exitEvent := fmt.Sprintf("event: exit\ndata: %d\n\n", exitCode)
-
-				_, err := io.WriteString(writer, exitEvent)
-				if err == nil {
-					flusher.Flush()
-				}
-
-				return
+		for line := range output {
+			err := writeSSEEvent(writer, flusher, "output", outputEventData{Message: line})
+			if err != nil {
+				log.WithError(err).Error("write output sse event")
 			}
 		}
 	}()
@@ -156,16 +163,21 @@ func deploySync(
 		},
 	)
 
+	close(output)
+	<-finished
+
 	exitCode := 0
 	if results != nil {
 		exitCode = results.ExitCode
 	}
 
-	done <- exitCode
-	<-finished
+	writeErr := writeSSEEvent(writer, flusher, "exit", exitEventData{ExitCode: exitCode})
+	if writeErr != nil {
+		log.WithError(writeErr).Error("write exit sse event")
+	}
 
 	if err != nil {
-		return fmt.Errorf("deploy err: %w", err)
+		return fmt.Errorf("deploy component: %w", err)
 	}
 
 	return nil
