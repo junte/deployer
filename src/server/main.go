@@ -117,13 +117,16 @@ func deploySync(
 	defer close(output)
 
 	done := make(chan int)
+	finished := make(chan struct{})
 
 	go func() {
+		defer close(finished)
+
 		for {
 			select {
 			case line, more := <-output:
 				if !more {
-					break
+					return
 				}
 
 				_, err := io.WriteString(writer, fmt.Sprintf("data: %s\n", line))
@@ -159,6 +162,7 @@ func deploySync(
 	}
 
 	done <- exitCode
+	<-finished
 
 	if err != nil {
 		return fmt.Errorf("deploy err: %w", err)
