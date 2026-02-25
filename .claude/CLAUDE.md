@@ -84,7 +84,7 @@ Follow this workflow when writing or modifying Go code:
 1. **Implement** — write or modify the Go code following `go-codestyle.md` rules
 2. **Write tests** — add or update tests for changed logic; use table-driven tests
 3. **Run tests** — `make test` (or `go test -v ./path/to/pkg/...` for a single package); fix any failures before continuing
-4. **Lint** — `make lint`; fix all reported issues
+4. **Lint** — use `lint-runner` subagent; it runs `make lint` and fixes all reported issues
 5. **Code review** — use `go-reviewer` subagent to check against codestyle rules
 6. **Security audit** — use `security-auditor` subagent when auth, key handling, command execution, or config parsing is touched
 
@@ -99,7 +99,7 @@ Use these subagents automatically when the situation matches — no need to ask.
 | `go-reviewer` | After writing or modifying any Go file — review against codestyle rules |
 | `security-auditor` | When auth, key handling, command execution, or config parsing is touched |
 | `test-runner` | When asked to run tests or when a test failure needs to be diagnosed and fixed |
-| `lint` | After writing or modifying any Go file — run `make lint` and fix any reported issues |
+| `lint-runner` | After writing or modifying any Go file — run `make lint` and fix any reported issues |
 
 ## Notes
 
