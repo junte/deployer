@@ -95,7 +95,7 @@ Development config lives in `tools/dev/config.yaml`. Example HTTP requests are i
 
 ## Module
 
-Module path: `deployer` (Go 1.26). Binary entry point: `src/cmd/server/main.go`.
+Module path: `deployer` (Go 1.26). Binary entry point: `src/main.go`.
 
 ## Development Workflow
 

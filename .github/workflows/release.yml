@@ -38,7 +38,7 @@ jobs:
           CGO_ENABLED=0 GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} \
             go build -a -installsuffix cgo \
             -ldflags="-X 'deployer/internal/config.Version=${GIT_VERSION}'" \
-            -o bin/deployer-${{ matrix.os }}-${{ matrix.arch }} deployer/cmd/server
+            -o bin/deployer-${{ matrix.os }}-${{ matrix.arch }} deployer/src
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
