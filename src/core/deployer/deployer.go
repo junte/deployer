@@ -104,9 +104,9 @@ func (deployer *ComponentDeployer) internalDeploy() (*core.ComponentDeployResult
 
 	var exitCode int
 
-	if err = cmd.Wait(); err != nil {
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) {
+	err = cmd.Wait()
+	if err != nil {
+		if exitErr, ok := errors.AsType[*exec.ExitError](err); ok {
 			if status, isWaitStatus := exitErr.Sys().(syscall.WaitStatus); isWaitStatus {
 				exitCode = status.ExitStatus()
 			}

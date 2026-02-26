@@ -19,24 +19,43 @@ make tag            # Create git tag from VERSION file
 Run a single test file:
 
 ```bash
-go test -v ./internal/core/deployer/...
+go test -v ./src/core/deployer/...
 ```
 
 ## Architecture
 
+### Server mode (default)
+
 ```
 HTTP POST Request
     ↓
-internal/server/main.go        # Parses form data (component, key, async, args)
+src/server/main.go        # Parses form data (component, key, async, args)
     ↓
-internal/core/deployer/main.go # Validates component config and security key
+src/core/deployer/main.go # Validates component config and security key
     ↓
-internal/core/deployer/deployer.go  # Executes shell command via os/exec;
-                                    # injects request params via Go templates
-                                    # ({{ .Args.param }}) into command array;
-                                    # streams stdout/stderr line-by-line
+src/core/deployer/deployer.go  # Executes shell command via os/exec;
+                                # injects request params via Go templates
+                                # ({{ .Args.param }}) into command array;
+                                # streams stdout/stderr line-by-line
     ↓
-internal/core/notify/           # Post-deployment Slack notifications
+src/core/notify/           # Post-deployment Slack notifications
+```
+
+### Client mode (`deployer client`)
+
+```
+deployer client --url <url> --component <name> [--key <key>] [--arg k=v]...
+    ↓
+src/client/main.go         # Builds HTTP POST, streams SSE response to stdout,
+                            # exits with the remote process exit code
+```
+
+```bash
+deployer client \
+  --url http://localhost:7778 \
+  --component app \
+  --key 242134321432143214213 \
+  --arg tag=v1.2.3
 ```
 
 **Sync mode**: streams output as SSE (`text/event-stream`) in real-time.
@@ -66,16 +85,17 @@ components:
         channel: "#backend-deploys"
 ```
 
-Development config lives in `dev/config.yaml`. Example HTTP requests are in `http/api.http`.
+Development config lives in `tools/dev/config.yaml`. Example HTTP requests are in `http/api.http`.
 
 ## Key Types
 
-- `internal/core/types.go` — `ComponentDeployRequest` (input) and `ComponentDeployResults` (output with stdout/stderr/exit code)
-- `internal/config/main.go` — `AppConfig`, `ComponentConfig`, `TLSConfig`, `NotificationConfig`
+- `src/core/types.go` — `ComponentDeployRequest` (input) and `ComponentDeployResults` (output with stdout/stderr/exit code)
+- `src/config/main.go` — `AppConfig`, `ComponentConfig`, `TLSConfig`, `NotificationConfig`
+- `src/client/main.go` — `Options` (client request config)
 
 ## Module
 
-Module path: `deployer` (Go 1.19). Binary entry point: `cmd/server/main.go`.
+Module path: `deployer` (Go 1.26). Binary entry point: `src/cmd/server/main.go`.
 
 ## Development Workflow
 

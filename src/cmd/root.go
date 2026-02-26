@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func main() {
+func Execute() {
 	var configFile string
 
 	rootCmd := &cobra.Command{
@@ -25,7 +25,10 @@ func main() {
 	rootCmd.Flags().StringVarP(&configFile, "config", "c", "config.yaml", "configuration filename")
 	rootCmd.SilenceErrors = true
 
-	if err := rootCmd.Execute(); err != nil {
+	rootCmd.AddCommand(newClientCmd())
+
+	err := rootCmd.Execute()
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
