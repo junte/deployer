@@ -6,7 +6,7 @@
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/src/cmd/server",
+      "program": "${workspaceFolder}/src",
       "args": [
         "--config=tools/dev/config.yaml"
       ],

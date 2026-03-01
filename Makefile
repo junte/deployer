@@ -25,3 +25,4 @@ tag:
 
 lint:
 	golangci-lint run
+
