@@ -150,6 +150,16 @@ func dispatchEvent(logger logrus.FieldLogger, eventName string, rawData string, 
 			fmt.Print(data.Message)
 		}
 
+	case "error":
+		var data outputEventData
+
+		err := json.Unmarshal([]byte(rawData), &data)
+		if err != nil {
+			logger.WithError(err).Error("unmarshal error event")
+		} else {
+			fmt.Print(data.Message)
+		}
+
 	case "exit":
 		var data exitEventData
 

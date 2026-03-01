@@ -7,6 +7,7 @@ type ComponentDeployRequest struct {
 	ComponentKey  string
 	Args          map[string]string
 	Output        *chan string
+	ErrorOutput   *chan string
 	IsAsync       bool
 }
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"time"
 
 	"deployer/src/config"
@@ -140,15 +141,38 @@ func deploySync(
 	flusher.Flush()
 
 	output := make(chan string)
-	finished := make(chan struct{})
+	errorOutput := make(chan string)
+
+	var mu sync.Mutex
+
+	var wg sync.WaitGroup
+
+	wg.Add(2)
 
 	go func() {
-		defer close(finished)
+		defer wg.Done()
 
 		for line := range output {
+			mu.Lock()
 			err := writeSSEEvent(writer, flusher, "output", outputEventData{Message: line})
+			mu.Unlock()
+
 			if err != nil {
 				log.WithError(err).Error("write output sse event")
+			}
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		for line := range errorOutput {
+			mu.Lock()
+			err := writeSSEEvent(writer, flusher, "error", outputEventData{Message: line})
+			mu.Unlock()
+
+			if err != nil {
+				log.WithError(err).Error("write error sse event")
 			}
 		}
 	}()
@@ -159,12 +183,14 @@ func deploySync(
 			ComponentKey:  componentKey,
 			Args:          args,
 			Output:        &output,
+			ErrorOutput:   &errorOutput,
 			IsAsync:       false,
 		},
 	)
 
 	close(output)
-	<-finished
+	close(errorOutput)
+	wg.Wait()
 
 	exitCode := 0
 	if results != nil {

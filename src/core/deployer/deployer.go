@@ -171,8 +171,8 @@ func (deployer *ComponentDeployer) aggregateOutput(
 			if ok {
 				*stderrLines = append(*stderrLines, line)
 
-				if deployer.request.Output != nil {
-					*deployer.request.Output <- line
+				if deployer.request.ErrorOutput != nil {
+					*deployer.request.ErrorOutput <- line
 				}
 
 				log.Debug(line)
