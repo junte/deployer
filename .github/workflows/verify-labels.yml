@@ -2,12 +2,12 @@ name: "Verify type labels"
 
 on:
   pull_request:
-    types: [ opened, labeled, unlabeled, synchronize ]
+    types: [opened, labeled, unlabeled, synchronize]
 
 jobs:
   triage:
     runs-on: ubuntu-20.04
     steps:
-      - uses: zwaldowski/match-label-action@v2
+      - uses: zwaldowski/match-label-action@v5
         with:
-          allowed: 'fix, enhancement, documentation, tests, config'
+          allowed: "fix, enhancement, documentation, tests, config"
