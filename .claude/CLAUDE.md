@@ -61,6 +61,24 @@ deployer client \
 **Sync mode**: streams output as SSE (`text/event-stream`) in real-time.
 **Async mode** (`async=true`): returns HTTP 200 immediately; deployment runs in background goroutine.
 
+### SSE Event Protocol
+
+Each SSE block sent from server to client:
+
+```
+event: <name>\r\n
+data: <json>\r\n
+\r\n
+```
+
+| Event   | JSON shape                    | Meaning                        |
+|---------|-------------------------------|--------------------------------|
+| `output`| `{"message": "..."}` | stdout line (includes trailing `\n`) |
+| `error` | `{"message": "..."}` | stderr line (includes trailing `\n`) |
+| `exit`  | `{"exit_code": N}`   | remote process exit code       |
+
+Client colors: `output` → plain, `error` → yellow, `exit 0` → green, `exit N` → red.
+
 ## Configuration
 
 Config is loaded from `config.yaml` (Viper). See `config.yaml.example` for the full schema. Key fields:
@@ -124,3 +142,4 @@ Use these subagents automatically when the situation matches — no need to ask.
 ## Notes
 
 - Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask
+- Avoid adding new dependencies for things achievable with stdlib. For terminal coloring use raw ANSI escape codes; do not add `fatih/color` or similar libraries.
