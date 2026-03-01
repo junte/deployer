@@ -8,9 +8,10 @@ RUN go mod download
 
 COPY . .
 
-RUN VERSION=$(cat VERSION) \
-  && GOOS=linux GO111MODULE=on CGO_ENABLED=0 \
+ARG VERSION=dev
+
+RUN GOOS=linux GO111MODULE=on CGO_ENABLED=0 \
   go build -a -installsuffix cgo \
-  -ldflags="-X 'deployer/internal/core.Version=v${VERSION}'" \
+  -ldflags="-X 'deployer/internal/core.Version=${VERSION}'" \
   -o bin/deployer \
   deployer/src

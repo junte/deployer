@@ -1,4 +1,3 @@
-VERSION=$(shell cat VERSION)
 GIT_VERSION=$(shell git describe --tags --always --dirty)
 
 build:
@@ -21,7 +20,7 @@ test:
 	go test -v ./...
 
 tag:
-	git tag -a v${VERSION} -m "v${VERSION}"
+	git tag -a ${VERSION} -m "v${VERSION}"
 
 lint:
 	golangci-lint run

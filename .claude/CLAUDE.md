@@ -13,7 +13,6 @@ make build          # Build native binary to bin/deployer
 make build-linux    # Cross-compile for Linux amd64 with version injection
 make test           # Run all tests: go test -v ./...
 make lint           # Run golangci-lint
-make tag            # Create git tag from VERSION file
 ```
 
 Run a single test file:
