@@ -13,6 +13,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	colorReset  = "\033[0m"
+	colorRed    = "\033[31m"
+	colorGreen  = "\033[32m"
+	colorYellow = "\033[33m"
+)
+
 // Options holds the configuration for a client deployment request.
 type Options struct {
 	URL       string
@@ -157,7 +164,7 @@ func dispatchEvent(logger logrus.FieldLogger, eventName string, rawData string, 
 		if err != nil {
 			logger.WithError(err).Error("unmarshal error event")
 		} else {
-			fmt.Print(data.Message)
+			fmt.Print(colorYellow + data.Message + colorReset)
 		}
 
 	case "exit":
@@ -168,6 +175,12 @@ func dispatchEvent(logger logrus.FieldLogger, eventName string, rawData string, 
 			logger.WithError(err).Error("unmarshal exit event")
 		} else {
 			exitCode = data.ExitCode
+
+			if exitCode == 0 {
+				fmt.Println(colorGreen + "exit 0" + colorReset)
+			} else {
+				fmt.Printf("%sexit %d%s\n", colorRed, exitCode, colorReset)
+			}
 		}
 	}
 

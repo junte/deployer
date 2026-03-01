@@ -1,6 +1,6 @@
 #! /bin/bash
 
-echo "first arg: $1"
+echo "first arg: $1" >&2
 
 for number in {0..5}; do
     echo "$number "
