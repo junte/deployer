@@ -14,8 +14,5 @@ RUN GOOS=linux GO111MODULE=on CGO_ENABLED=0 \
   go build -a -installsuffix cgo \
   -ldflags="-X 'deployer/src/config.Version=${VERSION}'" \
   -o bin/deployer \
-  deployer/src
-
-RUN cp bin/deployer /usr/local/bin/deployer
-
-ENTRYPOINT ["deployer"]
+  deployer/src \
+  && cp bin/deployer /usr/local/bin/deployer 
