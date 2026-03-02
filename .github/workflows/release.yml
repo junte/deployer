@@ -37,7 +37,7 @@ jobs:
           GIT_VERSION=$(git describe --tags --always --dirty)
           CGO_ENABLED=0 GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }} \
             go build -a -installsuffix cgo \
-            -ldflags="-X 'deployer/internal/config.Version=${GIT_VERSION}'" \
+            -ldflags="-X 'deployer/src/config.Version=${GIT_VERSION}'" \
             -o bin/deployer-${{ matrix.os }}-${{ matrix.arch }} deployer/src
 
       - name: Upload artifact
