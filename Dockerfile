@@ -15,4 +15,4 @@ RUN GOOS=linux GO111MODULE=on CGO_ENABLED=0 \
   -ldflags="-X 'deployer/src/config.Version=${VERSION}'" \
   -o bin/deployer \
   deployer/src \
-  && cp bin/deployer /usr/local/bin/deployer 
+  && cp bin/deployer /usr/local/bin/deployer
