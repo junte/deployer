@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"syscall"
 	"text/template"
+	"time"
 
 	"deployer/src/config"
 	"deployer/src/core"
@@ -52,8 +53,13 @@ func (deployer *ComponentDeployer) internalDeploy() (*core.ComponentDeployResult
 		return nil, fmt.Errorf("error on prepare command: %w", err)
 	}
 
-	log.Debugf("exec command: %s", command)
-	cmd := exec.Command(command[0], command[1:]...) //nolint:gosec
+	timeout := deployer.resolveTimeout()
+	ctx, contextCancel := context.WithTimeout(context.Background(), timeout)
+
+	defer contextCancel()
+
+	log.Debugf("exec command: %s (timeout: %s)", command, timeout)
+	cmd := exec.CommandContext(ctx, command[0], command[1:]...) //nolint:gosec
 	cmd.Dir = deployer.config.WorkDir
 
 	cmdStdout, err := cmd.StdoutPipe()
@@ -79,8 +85,9 @@ func (deployer *ComponentDeployer) internalDeploy() (*core.ComponentDeployResult
 	stdoutReader := bufio.NewReader(cmdStdout)
 	stderrReader := bufio.NewReader(cmdStderr)
 
-	if err = cmd.Start(); err != nil {
-		log.WithError(err).Error("failed starting command")
+	err = cmd.Start()
+	if err != nil {
+		log.WithError(err).Error("error starting command")
 		return nil, fmt.Errorf("error starting command: %w", err)
 	}
 
@@ -90,30 +97,38 @@ func (deployer *ComponentDeployer) internalDeploy() (*core.ComponentDeployResult
 	defer close(stderr)
 	defer close(stdout)
 
-	context, contextCancel := context.WithCancel(context.Background())
-
 	var (
 		stdoutLines []string
 		stderrLines []string
 	)
 
-	go deployer.aggregateOutput(context, &stdout, &stderr, &stdoutLines, &stderrLines)
+	go deployer.aggregateOutput(ctx, &stdout, &stderr, &stdoutLines, &stderrLines)
 
-	go deployer.handleReader(context, &stdout, stdoutReader)
-	go deployer.handleReader(context, &stderr, stderrReader)
+	go deployer.handleReader(ctx, &stdout, stdoutReader)
+	go deployer.handleReader(ctx, &stderr, stderrReader)
 
 	var exitCode int
 
 	err = cmd.Wait()
 	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			log.Warnf("command timed out after %s", timeout)
+
+			return &core.ComponentDeployResults{
+				Request:  deployer.request,
+				Config:   deployer.config,
+				StdErr:   append(stderrLines, fmt.Sprintf("deployment timed out after %s\n", timeout)),
+				StdOut:   stdoutLines,
+				ExitCode: 1,
+			}, nil
+		}
+
 		if exitErr, ok := errors.AsType[*exec.ExitError](err); ok {
 			if status, isWaitStatus := exitErr.Sys().(syscall.WaitStatus); isWaitStatus {
 				exitCode = status.ExitStatus()
 			}
 		}
 	}
-
-	contextCancel()
 
 	log.Debugf("exit status: %v", exitCode)
 
@@ -126,6 +141,14 @@ func (deployer *ComponentDeployer) internalDeploy() (*core.ComponentDeployResult
 	}
 
 	return deployResults, nil
+}
+
+func (deployer *ComponentDeployer) resolveTimeout() time.Duration {
+	if deployer.config.Timeout > 0 {
+		return deployer.config.Timeout
+	}
+
+	return config.Config.Timeout
 }
 
 func (*ComponentDeployer) handleReader(

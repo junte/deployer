@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -10,6 +11,7 @@ import (
 type AppConfig struct {
 	Port         string
 	Environment  string
+	Timeout      time.Duration
 	Components   map[string]ComponentConfig
 	TLS          TLSConfig
 	Notification NotificationConfig
@@ -29,6 +31,7 @@ type ComponentConfig struct {
 	Command      []string
 	Key          string
 	WorkDir      string
+	Timeout      time.Duration
 	Notification ComponentNotificationConfig
 }
 
@@ -53,6 +56,8 @@ var Config AppConfig
 
 func ReadConfig(configFile string) error {
 	configName := strings.Split(configFile, ".")[0]
+
+	viper.SetDefault("timeout", "10m")
 
 	viper.SetConfigName(configName)
 	viper.SetConfigType("yaml")
