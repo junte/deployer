@@ -50,8 +50,9 @@ WantedBy=multi-user.target
 ## Configuration
 
 ```yaml
-port: ":7777"  # required - listening port 
+port: ":7777"  # required - listening port
 environment: "dev" # required - environment label
+timeout: "10m" # optional - global deployment timeout (default: 10m). Accepts Go duration strings (e.g. "30m", "1h")
 tls: # optional - if provided https server is started
   cert: ./tls/cert.crt
   key: ./tls/cert.key
@@ -63,7 +64,8 @@ components: # list of components for deploy
   backend: # component name. Value of "component" query parameter
     workdir: /opt/services/app/ # if set - use the workdir
     command: [ "./deploy_backend.sh", "--tag={{ .Args.tag }}" ] # required - deploy command
-    key: "<...>" # optional - random key for additional protection. If not provided - don't check. Value of "key" query parameter 
+    key: "<...>" # optional - random key for additional protection. If not provided - don't check. Value of "key" query parameter
+    timeout: "30m" # optional - per-component timeout, overrides global timeout
   frontend:
     command: [ "/opt/services/app/deploy_frontend.sh", "--tag={{ .Args.tag }}" ] # required - deploy command
 ```
@@ -100,11 +102,16 @@ curl -X POST -d "component=backend&key=secret&tag=42" https://deployer.example.c
 
 ```yaml
 deploy:
-  image: curlimages/curl:7.74.0
   stage: deploy
-  dependencies: [ ]
+  image: ghcr.io/junte/deployer:0.10.5
+  dependencies: []
   script:
-    - curl -X POST -d "component=backend&key=${DEPLOYER_KEY}&tag=${CI_PIPELINE_ID}" ${DEPLOYER_HOST}
+    - >-
+      deployer client
+      --url ${DEPLOYER_HOST}
+      --component backend 
+      --key ${DEPLOYER_KEY}
+      --arg tag=${DEPLOYER_TAG}
 ```
 
 - DEPLOYER_KEY, DEPLOYER_HOST are taken from ci/cd variables setting
@@ -115,9 +122,16 @@ deploy:
 deploy:
   runs-on: ubuntu-20.04
   if: ${{ github.ref == 'refs/heads/main' }}
+  container:
+    image: ghcr.io/junte/deployer:0.10.5
   steps:
     - name: Deploy
-      run: curl -k -X POST -d "component=backend&key=${{ secrets.DEPLOYER_KEY }}&tag=${{ tag }}" ${{ secrets.DEPLOYER_HOST }}
+      run: >-
+        deployer client
+        --url ${{ secrets.DEPLOYER_HOST }}
+        --component backend
+        --key ${{ secrets.DEPLOYER_KEY }}
+        --arg tag=${{ github.sha }}
 ```
 
 - DEPLOYER_KEY, DEPLOYER_HOST are taken from github secrets
