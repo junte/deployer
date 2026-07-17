@@ -7,23 +7,16 @@ import (
 	"deployer/src/core"
 )
 
-func DeployComponent(request *core.ComponentDeployRequest) (*core.ComponentDeployResults, error) {
+func NewComponentDeployer(request *core.ComponentDeployRequest) (*ComponentDeployer, error) {
 	componentConfig, err := getComponentConfig(request)
 	if err != nil {
-		return nil, fmt.Errorf("error on get component config: %w", err)
+		return nil, fmt.Errorf("get component config: %w", err)
 	}
 
-	componentDeployer := ComponentDeployer{
+	return &ComponentDeployer{
 		request: request,
 		config:  &componentConfig,
-	}
-
-	if request.IsAsync {
-		go componentDeployer.DeployAsync()
-		return &core.ComponentDeployResults{}, nil
-	}
-
-	return componentDeployer.Deploy()
+	}, nil
 }
 
 func getComponentConfig(request *core.ComponentDeployRequest) (config.ComponentConfig, error) {

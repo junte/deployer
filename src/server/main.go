@@ -78,24 +78,33 @@ func handler(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	args := extractArgs(request)
-	componentName := request.FormValue("component")
-	componentKey := request.FormValue("key")
-
 	isAsync := request.Form["async"] != nil
 
-	var deployErr error
-
-	if isAsync {
-		deployErr = deployAsync(componentName, componentKey, args)
-	} else {
-		deployErr = deploySync(componentName, componentKey, args, writer)
+	deployRequest := &core.ComponentDeployRequest{
+		ComponentName: request.FormValue("component"),
+		ComponentKey:  request.FormValue("key"),
+		Args:          extractArgs(request),
+		IsAsync:       isAsync,
 	}
 
-	if deployErr != nil {
-		http.Error(writer, fmt.Sprintf("deploy err: %v", deployErr), http.StatusBadRequest)
+	// resolve and validate the component before any response header is
+	// written, so validation failures return a real HTTP 400 instead of
+	// racing an already-committed 200 stream.
+	componentDeployer, err := deployer.NewComponentDeployer(deployRequest)
+	if err != nil {
+		http.Error(writer, fmt.Sprintf("deploy err: %v", err), http.StatusBadRequest)
 		return
 	}
+
+	if isAsync {
+		go componentDeployer.DeployAsync()
+
+		writer.WriteHeader(http.StatusOK)
+
+		return
+	}
+
+	deploySync(componentDeployer, deployRequest, writer)
 }
 
 type outputEventData struct {
@@ -123,14 +132,15 @@ func writeSSEEvent(writer io.Writer, flusher http.Flusher, eventName string, dat
 }
 
 func deploySync(
-	componentName string,
-	componentKey string,
-	args map[string]string,
+	componentDeployer *deployer.ComponentDeployer,
+	request *core.ComponentDeployRequest,
 	writer http.ResponseWriter,
-) error {
+) {
 	flusher, ok := writer.(http.Flusher)
 	if !ok {
-		return errors.New("can't stream to response")
+		http.Error(writer, "can't stream to response", http.StatusInternalServerError)
+
+		return
 	}
 
 	writer.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
@@ -143,88 +153,73 @@ func deploySync(
 	output := make(chan string)
 	errorOutput := make(chan string)
 
+	request.Output = &output
+	request.ErrorOutput = &errorOutput
+
 	var mu sync.Mutex
 
 	var wg sync.WaitGroup
 
-	wg.Add(2)
+	wg.Go(func() {
+		streamSSELines(writer, flusher, &mu, "output", output)
+	})
+	wg.Go(func() {
+		streamSSELines(writer, flusher, &mu, "error", errorOutput)
+	})
 
-	go func() {
-		defer wg.Done()
-
-		for line := range output {
-			mu.Lock()
-			err := writeSSEEvent(writer, flusher, "output", outputEventData{Message: line})
-			mu.Unlock()
-
-			if err != nil {
-				log.WithError(err).Error("write output sse event")
-			}
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-
-		for line := range errorOutput {
-			mu.Lock()
-			err := writeSSEEvent(writer, flusher, "error", outputEventData{Message: line})
-			mu.Unlock()
-
-			if err != nil {
-				log.WithError(err).Error("write error sse event")
-			}
-		}
-	}()
-
-	results, err := deployer.DeployComponent(
-		&core.ComponentDeployRequest{
-			ComponentName: componentName,
-			ComponentKey:  componentKey,
-			Args:          args,
-			Output:        &output,
-			ErrorOutput:   &errorOutput,
-			IsAsync:       false,
-		},
-	)
+	results, err := componentDeployer.Deploy()
 
 	close(output)
 	close(errorOutput)
 	wg.Wait()
 
-	exitCode := 0
-	if results != nil {
-		exitCode = results.ExitCode
+	// the header is already committed as a 200 stream, so a deploy failure
+	// can only be reported through SSE events, never a changed status code.
+	if err != nil {
+		log.WithError(err).Error("deploy component")
+
+		writeErr := writeSSEEvent(writer, flusher, "error", outputEventData{Message: fmt.Sprintf("deploy err: %v\n", err)})
+		if writeErr != nil {
+			log.WithError(writeErr).Error("write error sse event")
+		}
 	}
+
+	exitCode := resolveExitCode(results, err)
 
 	writeErr := writeSSEEvent(writer, flusher, "exit", exitEventData{ExitCode: exitCode})
 	if writeErr != nil {
 		log.WithError(writeErr).Error("write exit sse event")
 	}
-
-	if err != nil {
-		return fmt.Errorf("deploy component: %w", err)
-	}
-
-	return nil
 }
 
-func deployAsync(
-	componentName string,
-	componentKey string,
-	args map[string]string,
-) error {
-	_, err := deployer.DeployComponent(
-		&core.ComponentDeployRequest{
-			ComponentName: componentName,
-			ComponentKey:  componentKey,
-			Args:          args,
-			Output:        nil,
-			IsAsync:       true,
-		},
-	)
+func streamSSELines(
+	writer io.Writer,
+	flusher http.Flusher,
+	mu *sync.Mutex,
+	eventName string,
+	lines <-chan string,
+) {
+	for line := range lines {
+		mu.Lock()
+		err := writeSSEEvent(writer, flusher, eventName, outputEventData{Message: line})
+		mu.Unlock()
 
-	return err
+		if err != nil {
+			log.WithError(err).Errorf("write %s sse event", eventName)
+		}
+	}
+}
+
+func resolveExitCode(results *core.ComponentDeployResults, err error) int {
+	if results != nil {
+		return results.ExitCode
+	}
+
+	if err != nil {
+		return 1
+	}
+
+	return 0
 }
 
 func extractArgs(request *http.Request) map[string]string {
