@@ -15,6 +15,12 @@ make test           # Run all tests: go test -v ./...
 make lint           # Run golangci-lint
 ```
 
+Run the server locally (server mode is the DEFAULT — there is no `server` subcommand):
+
+```bash
+./bin/deployer --config tools/dev/config.yaml
+```
+
 Run a single test file:
 
 ```bash
@@ -103,6 +109,8 @@ components:
 ```
 
 Development config lives in `tools/dev/config.yaml`. Example HTTP requests are in `http/api.http`.
+
+Tests exercising the deploy/exec path must set a non-zero `Timeout` in `config.Config` (or the component) — a zero value makes `context.WithTimeout` expire the command immediately.
 
 ## Key Types
 
