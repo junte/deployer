@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"deployer/src/config"
+	"deployer/src/core"
 )
 
 func TestPrepareCommand(t *testing.T) {
@@ -43,6 +44,67 @@ func TestPrepareCommand(t *testing.T) {
 				t.Errorf("err: %s", err)
 			} else if !reflect.DeepEqual(command, testCase.want) {
 				t.Errorf("got %s, want %s", command, testCase.want)
+			}
+		})
+	}
+}
+
+func TestInternalDeployCapturesOutput(t *testing.T) {
+	tests := []struct {
+		name         string
+		command      []string
+		wantExitCode int
+		wantStdOut   []string
+		wantStdErr   []string
+	}{
+		{
+			name:         "captures stdout with zero exit",
+			command:      []string{"/bin/sh", "-c", "echo hello"},
+			wantExitCode: 0,
+			wantStdOut:   []string{"hello\n"},
+			wantStdErr:   nil,
+		},
+		{
+			name:         "captures stderr with non-zero exit",
+			command:      []string{"/bin/sh", "-c", "echo oops 1>&2; exit 2"},
+			wantExitCode: 2,
+			wantStdOut:   nil,
+			wantStdErr:   []string{"oops\n"},
+		},
+		{
+			name:         "captures both streams",
+			command:      []string{"/bin/sh", "-c", "echo out; echo err 1>&2; exit 3"},
+			wantExitCode: 3,
+			wantStdOut:   []string{"out\n"},
+			wantStdErr:   []string{"err\n"},
+		},
+	}
+
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			componentDeployer := ComponentDeployer{
+				request: &core.ComponentDeployRequest{},
+				config: &config.ComponentConfig{
+					Command: testCase.command,
+					Timeout: 30 * time.Second,
+				},
+			}
+
+			results, err := componentDeployer.internalDeploy()
+			if err != nil {
+				t.Fatalf("err: %s", err)
+			}
+
+			if results.ExitCode != testCase.wantExitCode {
+				t.Errorf("exit code: got %d, want %d", results.ExitCode, testCase.wantExitCode)
+			}
+
+			if !reflect.DeepEqual(results.StdOut, testCase.wantStdOut) {
+				t.Errorf("stdout: got %q, want %q", results.StdOut, testCase.wantStdOut)
+			}
+
+			if !reflect.DeepEqual(results.StdErr, testCase.wantStdErr) {
+				t.Errorf("stderr: got %q, want %q", results.StdErr, testCase.wantStdErr)
 			}
 		})
 	}

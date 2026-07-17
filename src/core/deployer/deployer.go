@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"sync"
 	"syscall"
 	"text/template"
 	"time"
@@ -94,18 +95,37 @@ func (deployer *ComponentDeployer) internalDeploy() (*core.ComponentDeployResult
 	stdout := make(chan string)
 	stderr := make(chan string)
 
-	defer close(stderr)
-	defer close(stdout)
-
 	var (
 		stdoutLines []string
 		stderrLines []string
 	)
 
-	go deployer.aggregateOutput(ctx, &stdout, &stderr, &stdoutLines, &stderrLines)
+	var aggregateWaitGroup sync.WaitGroup
 
-	go deployer.handleReader(ctx, &stdout, stdoutReader)
-	go deployer.handleReader(ctx, &stderr, stderrReader)
+	aggregateWaitGroup.Go(func() {
+		deployer.aggregateOutput(stdout, stderr, &stdoutLines, &stderrLines)
+	})
+
+	var readersWaitGroup sync.WaitGroup
+
+	readersWaitGroup.Go(func() {
+		deployer.handleReader(stdout, stdoutReader)
+	})
+	readersWaitGroup.Go(func() {
+		deployer.handleReader(stderr, stderrReader)
+	})
+
+	// wait for both pipes to reach EOF (process exit or ctx timeout kills the
+	// process and closes the pipes) before closing the internal channels, so no
+	// reader ever sends on a closed channel.
+	readersWaitGroup.Wait()
+	close(stdout)
+	close(stderr)
+
+	// wait for aggregation to drain both channels before reading the accumulated
+	// lines below and before returning, so forwarding to the request channels and
+	// the slice appends are complete.
+	aggregateWaitGroup.Wait()
 
 	var exitCode int
 
@@ -152,56 +172,57 @@ func (deployer *ComponentDeployer) resolveTimeout() time.Duration {
 }
 
 func (*ComponentDeployer) handleReader(
-	context context.Context,
-	output *chan string,
+	output chan<- string,
 	reader *bufio.Reader,
 ) {
 	for {
-		select {
-		case <-context.Done():
-			return
-		default:
-			str, err := reader.ReadString('\n')
-			if err != nil {
-				return
-			}
+		line, err := reader.ReadString('\n')
+		if len(line) > 0 {
+			output <- line
+		}
 
-			*output <- str
+		if err != nil {
+			return
 		}
 	}
 }
 
 func (deployer *ComponentDeployer) aggregateOutput(
-	context context.Context,
-	stdout *chan string,
-	stderr *chan string,
+	stdout <-chan string,
+	stderr <-chan string,
 	stdoutLines *[]string,
 	stderrLines *[]string,
 ) {
-	for {
+	for stdout != nil || stderr != nil {
 		select {
-		case line, ok := <-*stdout:
-			if ok {
-				*stdoutLines = append(*stdoutLines, line)
+		case line, ok := <-stdout:
+			if !ok {
+				stdout = nil
 
-				if deployer.request.Output != nil {
-					*deployer.request.Output <- line
-				}
-
-				log.Debug(line)
+				continue
 			}
-		case line, ok := <-*stderr:
-			if ok {
-				*stderrLines = append(*stderrLines, line)
 
-				if deployer.request.ErrorOutput != nil {
-					*deployer.request.ErrorOutput <- line
-				}
+			*stdoutLines = append(*stdoutLines, line)
 
-				log.Debug(line)
+			if deployer.request.Output != nil {
+				*deployer.request.Output <- line
 			}
-		case <-context.Done():
-			return
+
+			log.Debug(line)
+		case line, ok := <-stderr:
+			if !ok {
+				stderr = nil
+
+				continue
+			}
+
+			*stderrLines = append(*stderrLines, line)
+
+			if deployer.request.ErrorOutput != nil {
+				*deployer.request.ErrorOutput <- line
+			}
+
+			log.Debug(line)
 		}
 	}
 }
