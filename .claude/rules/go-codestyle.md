@@ -109,14 +109,14 @@ applyTo: "**/*.go"
 - always pass `context.Context` as the first parameter
 - prefer channels for communication, mutexes for state protection
 - use `defer` for cleanup (mutex unlock, file close, etc.)
-- use `sync.WaitGroup` to wait for multiple goroutines
+- use `sync.WaitGroup` to wait for multiple goroutines; prefer `wg.Go(func(){...})` (Go 1.25+) over manual `wg.Add(1)` + `go func(){ defer wg.Done() }()` — the toolchain flags the manual form
 - use `select` with `context.Done()` for cancellation-aware loops
 
 ## Testing
 
 - use table-driven tests with descriptive test case names
 - use `t.Helper()` in test helper functions
-- prefer `testify/assert` or `testify/require` for assertions
+- use stdlib `testing` with `reflect.DeepEqual` for assertions — testify is not a dependency and must not be added (see Dependencies)
 - use `defer` for test cleanup/teardown (e.g., restoring global state)
 - iterate test cases with `for _, testCase := range tests` and `t.Run(testCase.name, ...)`
 
