@@ -54,6 +54,16 @@ func Run(ctx context.Context, logger logrus.FieldLogger, opts Options) (int, err
 	}()
 
 	if resp.StatusCode != http.StatusOK {
+		body, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			return 0, fmt.Errorf("unexpected status: %d (read response body: %w)", resp.StatusCode, readErr)
+		}
+
+		message := strings.TrimSpace(string(body))
+		if message != "" {
+			return 0, fmt.Errorf("unexpected status: %d: %s", resp.StatusCode, message)
+		}
+
 		return 0, fmt.Errorf("unexpected status: %d", resp.StatusCode)
 	}
 

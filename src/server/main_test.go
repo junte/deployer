@@ -95,16 +95,19 @@ func TestHandlerValidationReturnsBadRequest(t *testing.T) {
 	}
 
 	tests := []struct {
-		name string
-		form url.Values
+		name        string
+		form        url.Values
+		wantMessage string
 	}{
 		{
-			name: "unknown component",
-			form: url.Values{"component": {"nope"}},
+			name:        "unknown component",
+			form:        url.Values{"component": {"nope"}},
+			wantMessage: "component not found: nope",
 		},
 		{
-			name: "invalid component key",
-			form: url.Values{"component": {"app"}, "key": {"wrong"}},
+			name:        "invalid component key",
+			form:        url.Values{"component": {"app"}, "key": {"wrong"}},
+			wantMessage: "invalid component key for component: app",
 		},
 	}
 
@@ -120,6 +123,10 @@ func TestHandlerValidationReturnsBadRequest(t *testing.T) {
 
 			if strings.Contains(body, "event:") {
 				t.Errorf("expected no sse stream, got body: %q", body)
+			}
+
+			if !strings.Contains(body, testCase.wantMessage) {
+				t.Errorf("body missing message %q, got: %q", testCase.wantMessage, body)
 			}
 
 			assertNoSuperfluousHeader(t, errorLog)
